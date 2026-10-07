@@ -4,7 +4,7 @@
 <meta charset="utf-8">
 <meta name="viewport" content="width=device-width, initial-scale=1">
 <meta name="color-scheme" content="light dark">
-<title>Chữa bài – giáo viên</title>
+<title>Theo dõi tiến độ – giáo viên</title>
 <link rel="preconnect" href="https://fonts.googleapis.com">
 <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
 <link rel="stylesheet" href="https://fonts.googleapis.com/css2?family=Baloo+2:wght@600;700;800&family=Nunito:wght@400;600;700;800;900&display=swap">
@@ -37,6 +37,23 @@ h1,h2,h3{font-family:var(--font-display);line-height:1.2;margin:0;text-wrap:bala
 /* Biểu tượng tiến trình dùng ký tự sao để hiển thị cả khi máy thiếu font emoji. */
 @media(max-width:560px){.welcome{display:block}.welcome-mascot{position:absolute;top:21px;right:21px;margin:0}.welcome-copy>.eyebrow{padding-right:55px;max-width:100%;min-height:60px;display:flex;align-items:center}.welcome h1{padding-right:0}.section-label>.note{text-align:right;max-width:130px;flex:none}}
 
+
+.tabs{display:flex;gap:8px;flex-wrap:wrap}.kpi4{grid-template-columns:repeat(4,minmax(0,1fr))}
+.sel{font:inherit;font-size:inherit;border:2px solid var(--line);border-radius:14px;background:var(--bg);color:var(--ink);padding:6px 12px;max-width:100%}
+h2 .sel{font:800 24px var(--font-display)}
+.track{width:100%;border-collapse:collapse;font-size:15px}.track th,.track td{padding:10px 8px;border-bottom:1px solid var(--line);text-align:left;white-space:nowrap;vertical-align:middle}
+.track th{font-size:12px;text-transform:uppercase;letter-spacing:.06em;color:var(--muted)}.track td.good{color:var(--ok);font-weight:800}.track td.bad{color:var(--bad);font-weight:800}
+.scroll{overflow-x:auto;min-width:0}.trend{width:100%;min-width:420px;height:auto}.trend .ax{font-size:11px;fill:var(--muted)}.trend .val{font-size:11px;font-weight:800;fill:var(--ink)}
+.trend .grid{stroke:var(--line)}.trend .pass{stroke:var(--muted);stroke-dasharray:5 4}.trend .bw{fill:var(--sky)}.trend .bi{fill:var(--peach)}
+.chart-title{display:flex;justify-content:space-between;gap:10px;font-weight:900;flex-wrap:wrap}
+.hbars{display:grid;gap:12px}.hbar{display:grid;grid-template-columns:minmax(120px,230px) minmax(0,1fr) auto;gap:14px;align-items:center}
+.hbar .bg{position:relative;height:14px;background:var(--line);border-radius:999px}.hbar i{display:block;height:100%;border-radius:999px;background:var(--ok)}
+.hbar.bad i{background:var(--bad)}.hbar .m75{position:absolute;left:75%;top:-4px;bottom:-4px;border-left:2px dashed var(--muted)}.hbar .num{white-space:nowrap}
+.callout{background:var(--bad-soft);border-radius:16px;padding:14px 18px;line-height:1.7}.callout.ok{background:var(--ok-soft)}
+.fgrid{display:grid;grid-template-columns:repeat(3,minmax(0,1fr));gap:12px}
+#send-status{justify-content:space-between;flex-wrap:wrap}
+@media(max-width:850px){.kpi4{grid-template-columns:repeat(2,minmax(0,1fr))}.hbar{grid-template-columns:1fr;gap:4px}}
+@media(max-width:560px){.fgrid{grid-template-columns:1fr}.kpi4{grid-template-columns:1fr}}
 </style>
 
 </head>
@@ -767,5 +784,269 @@ if (MODE === 'teacher') { $('#bar').classList.add('teacher'); tStart(); }
 else { S = fresh(); render(); }
 </script>
 
+<script src="https://cdn.jsdelivr.net/npm/@supabase/supabase-js@2.45.4/dist/umd/supabase.js"></script>
+<script>
+// ===================== Theo dõi tiến độ (Supabase) =====================
+const SB_URL = 'https://oywgqkbhhydcdftbgpau.supabase.co', SB_KEY = 'eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJpc3MiOiJzdXBhYmFzZSIsInJlZiI6Im95d2dxa2JoaHlkY2RmdGJncGF1Iiwicm9sZSI6ImFub24iLCJpYXQiOjE3OTEzODExMDQsImV4cCI6MjEwNjk1NzEwNH0.POFHUhiVNlLLZTeow1DxfqeiPJbwne6Nx9cGbob-Qb4';
+const TAGS = {"buoi3-v1": ["Từ vựng", ["Nghe – phân biệt âm", "Nghe – phân biệt âm", "Nghe – phân biệt âm", "Nghe – phân biệt âm", "Nghe – phân biệt âm", "Nghe – hiểu đoạn văn", "Nghe – số, giờ", "Nghe – hiểu đoạn văn", "Nghe – hiểu đoạn văn", "Nghe – số, giờ"], "Chính tả từ vựng", ["Phát âm -s/-es", "Phát âm -s/-es", "Phát âm -s/-es", "Từ khác loại", "Ngữ pháp – hiện tại đơn", "Ngữ pháp – hiện tại đơn", "Ngữ pháp – hiện tại đơn", "Kiến thức – Địa lý", "Kiến thức – Địa lý", "Ngữ pháp – hiện tại đơn"]], "b3-luyentap": ["Động từ bất quy tắc (V3)", ["Nghe – phân biệt âm", "Nghe – phân biệt âm", "Nghe – phân biệt âm", "Nghe – phân biệt âm", "Nghe – phân biệt âm", "Nghe – phân biệt âm", "Nghe – phân biệt âm", "Nghe – số, giờ", "Nghe – hiểu câu", "Nghe – hiểu câu"], "Động từ bất quy tắc (V3)", "Ngữ pháp – hiện tại hoàn thành"], "b3-btvn": ["Từ vựng", ["Nghe – phân biệt âm", "Nghe – phân biệt âm", "Nghe – phân biệt âm", "Nghe – hiểu đoạn văn", "Nghe – hiểu đoạn văn", "Nghe – hiểu đoạn văn", "Nghe – số, giờ", "Nghe – hiểu đoạn văn", "Nghe – hiểu đoạn văn", "Nghe – hiểu đoạn văn"], "Chính tả từ vựng", ["Kiến thức – Khoa học", "Kiến thức – Khoa học", "Kiến thức – Khoa học", "Kiến thức – Khoa học", "Kiến thức – Khoa học", "Ngữ pháp – hiện tại hoàn thành", "Ngữ pháp – hiện tại hoàn thành", "Ngữ pháp – hiện tại hoàn thành", "Ngữ pháp – hiện tại hoàn thành", "Phát âm -s/-es"]]};
+const TYPE_LABEL = { match: 'Nối từ', listen: 'Nghe', fill: 'Điền từ', mcq: 'Trắc nghiệm' };
+const normName = s => (s || '').trim().replace(/\s+/g, ' ');
+const nameKey = s => normName(s).toLowerCase();
+function tagOf(setId, i, j) { const t = TAGS[setId] && TAGS[setId][i]; if (!t) return null; return Array.isArray(t) ? t[j] : t; }
+
+// ---------- HỌC SINH: tự gửi kết quả khi nộp bài ----------
+if (MODE === 'student') {
+  let sendState = 'idle';
+  const payload = () => {
+    const sc = BAI.map((_, i) => score(i, S.ans)), mx = BAI.map(b => b.pts);
+    const total = sc.reduce((a, b) => a + b, 0), max = mx.reduce((a, b) => a + b, 0);
+    const ans = S.ans.map((a, i) => BAI[i].type === 'match' ? { found: a.found, wrong: a.wrong, miss: a.miss } : a);
+    return { student: normName(S.name) || 'Học sinh', set_id: EXAM_ID, set_name: SETS[EXAM_ID].name, scores: sc, maxes: mx,
+      total, max_total: max, passed: sc.every((s, i) => s >= mx[i] * .75) && total >= max * .75,
+      seconds: TOTAL_SEC - Math.max(0, S.left), per_bai_seconds: S.used, answers: ans };
+  };
+  async function sendResult() {
+    if (sendState === 'ok' || sendState === 'sending') return;
+    sendState = 'sending'; showSend();
+    try {
+      const r = await fetch(SB_URL + '/rest/v1/attempts', { method: 'POST',
+        headers: { apikey: SB_KEY, Authorization: 'Bearer ' + SB_KEY, 'Content-Type': 'application/json', Prefer: 'return=minimal' },
+        body: JSON.stringify(payload()) });
+      sendState = r.ok ? 'ok' : 'fail';
+    } catch (e) { sendState = 'fail'; }
+    showSend();
+  }
+  function showSend() {
+    const box = document.querySelector('.codebox'); if (!box) return;
+    let el = document.querySelector('#send-status');
+    if (!el) { el = document.createElement('div'); el.id = 'send-status'; box.before(el); }
+    el.className = 'retry-feedback' + (sendState === 'ok' ? ' ok' : '');
+    el.setAttribute('role', 'status');
+    el.innerHTML = sendState === 'ok' ? '<span class="feedback ok">✓ Đã gửi kết quả cho cô. Em không cần gửi mã nữa.</span>'
+      : sendState === 'fail' ? '<span class="feedback bad">Chưa gửi được kết quả (máy có thể đang mất mạng).</span><button class="btn small" id="resend">Gửi lại</button>'
+      : '<span class="feedback">Đang gửi kết quả cho cô…</span>';
+    const b = el.querySelector('#resend'); if (b) b.onclick = () => { sendState = 'idle'; sendResult(); };
+  }
+  const _finish = finish; finish = function () { sendState = 'idle'; _finish(); sendResult(); };
+  const _result = rResult; rResult = function () { _result(); showSend(); };
+}
+
+// ---------- GIÁO VIÊN: bảng theo dõi ----------
+if (MODE === 'teacher') {
+  const sb = window.supabase.createClient(SB_URL, SB_KEY);
+  const pasteStart = tStart;
+  const DANG = ['Nối từ', 'Nghe', 'Điền từ', 'Đọc hiểu', 'Trắc nghiệm', 'Sắp xếp câu', 'Khác'];
+  const ROUND_FMT = { 1: [['Đọc hiểu', 100], ['Đọc hiểu', 100], ['Nối từ', 60], ['Nghe', 100]], 2: [['Điền từ', 100], ['Nối từ', 60], ['Đọc hiểu', 100], ['Nghe', 100]],
+    3: [['Sắp xếp câu', 100], ['Đọc hiểu', 100], ['Nối từ', 60], ['Nghe', 100]], 4: [['Điền từ', 100], ['Nối từ', 60], ['Đọc hiểu', 100], ['Nghe', 100]],
+    5: [['Nối từ', 60], ['Đọc hiểu', 100], ['Điền từ', 100], ['Nghe', 100]], 6: [['Đọc hiểu', 100], ['Nghe', 100], ['Nối từ', 60], ['Nghe', 100]],
+    7: [['Nối từ', 60], ['Đọc hiểu', 100], ['Điền từ', 100], ['Nghe', 100]], 8: [['Điền từ', 100], ['Đọc hiểu', 100], ['Nối từ', 60], ['Nghe', 100]] };
+  const D = { tab: 'track', student: null, attempts: [], rounds: [], msg: '', edit: null, del: null };
+  const pct = (s, m) => m ? Math.round(s / m * 100) : 0;
+  const dt = s => new Date(s).toLocaleString('vi-VN', { day: '2-digit', month: '2-digit', hour: '2-digit', minute: '2-digit' });
+  const d8 = s => s ? new Date(s).toLocaleDateString('vi-VN', { day: '2-digit', month: '2-digit' }) : '';
+
+  async function dashStart() {
+    stopAudio(); uiBrand(); document.body.classList.add('teacher-mode'); $('#bar').hidden = true; window.scrollTo(0, 0);
+    const { data } = await sb.auth.getSession();
+    if (!data.session) return loginView();
+    await load();
+  }
+  tStart = dashStart;
+
+  function loginView() {
+    $('#app').innerHTML = `<section class="card">
+      <div class="eyebrow">Bản giáo viên · Luyện IOE lớp 6</div><h1>Theo dõi tiến độ học sinh</h1>
+      <p class="muted">Đăng nhập bằng tài khoản giáo viên để xem mọi bài học sinh đã làm trên web và điểm các vòng tự luyện IOE.</p>
+      <div class="field" style="max-width:420px"><label for="em">Email</label><input id="em" type="email" autocomplete="username"></div>
+      <div class="field" style="max-width:420px"><label for="pw">Mật khẩu</label><input id="pw" type="password" autocomplete="current-password"></div>
+      <div class="row"><button class="btn go" id="login">Đăng nhập</button><button class="btn" id="signup">Tạo tài khoản lần đầu</button></div>
+      <p id="msg" class="note">${esc(D.msg)}</p>
+      <div class="row"><button class="btn small" id="paste">Dán mã kết quả (không cần đăng nhập)</button></div></section>`;
+    const creds = () => ({ email: $('#em').value.trim(), password: $('#pw').value });
+    const say = t => { D.msg = t; $('#msg').textContent = t; };
+    $('#login').onclick = async () => {
+      say('Đang đăng nhập…');
+      const { error } = await sb.auth.signInWithPassword(creds());
+      if (error) return say(/confirm/i.test(error.message) ? 'Email chưa được xác nhận. Mở hộp thư, bấm link xác nhận rồi đăng nhập lại.' : 'Sai email hoặc mật khẩu.');
+      D.msg = ''; load();
+    };
+    $('#signup').onclick = async () => {
+      const c = creds(); if (!c.email || c.password.length < 6) return say('Nhập email và mật khẩu (ít nhất 6 ký tự) rồi bấm lại.');
+      say('Đang tạo tài khoản…');
+      const { data, error } = await sb.auth.signUp(c);
+      if (error) return say('Không tạo được tài khoản: ' + error.message);
+      if (data.session) { D.msg = ''; load(); } else say('Đã tạo tài khoản. Mở email, bấm link xác nhận (trang mở ra có thể báo lỗi, không sao), rồi quay lại đây đăng nhập.');
+    };
+    $('#pw').addEventListener('keydown', e => { if (e.key === 'Enter') $('#login').click(); });
+    $('#paste').onclick = openPaste;
+  }
+  function openPaste() {
+    pasteStart();
+    const back = document.createElement('button'); back.className = 'btn small'; back.textContent = '← Về bảng theo dõi'; back.onclick = dashStart;
+    $('#app > .card').prepend(back);
+  }
+
+  async function load() {
+    $('#app').innerHTML = '<section class="card"><p class="muted">Đang tải dữ liệu…</p></section>';
+    const [t, a, r] = await Promise.all([sb.from('teachers').select('email'), sb.from('attempts').select('*').order('created_at', { ascending: false }).limit(2000),
+      sb.from('ioe_rounds').select('*').order('round_no')]);
+    if (t.error || a.error || r.error) { D.msg = 'Không tải được dữ liệu: ' + (t.error || a.error || r.error).message; await sb.auth.signOut(); return loginView(); }
+    if (!t.data.length) { D.msg = 'Tài khoản này chưa được cấp quyền giáo viên.'; await sb.auth.signOut(); return loginView(); }
+    D.attempts = a.data; D.rounds = r.data;
+    const names = students();
+    if (!D.student || !names.some(n => nameKey(n) === nameKey(D.student))) D.student = names[0] || null;
+    dashView();
+  }
+  function students() {
+    const m = new Map();
+    [...D.attempts, ...D.rounds].forEach(x => { const k = nameKey(x.student); if (!m.has(k)) m.set(k, normName(x.student)); });
+    return [...m.values()];
+  }
+  const mine = arr => arr.filter(x => nameKey(x.student) === nameKey(D.student));
+  const roundPass = r => { const s = r.bai.reduce((a, b) => a + (+b.score || 0), 0), m = r.bai.reduce((a, b) => a + (+b.max || 0), 0); return { s, m, ok: r.bai.every(b => +b.score >= +b.max * .75) && s >= m * .75 }; };
+
+  function dashView() {
+    const names = students(), at = mine(D.attempts), rd = mine(D.rounds);
+    const avg = at.length ? Math.round(at.reduce((s, x) => s + pct(+x.total, +x.max_total), 0) / at.length) : 0;
+    const passRate = at.length ? Math.round(at.filter(x => x.passed).length / at.length * 100) : 0;
+    const best = rd.filter(r => roundPass(r).ok).reduce((m, r) => Math.max(m, r.round_no), 0);
+    let body = `<section class="card">
+      <div class="row"><div><div class="eyebrow">Bản giáo viên · Theo dõi tiến độ</div>
+        <h2>Học sinh: ${names.length ? `<select id="stu" class="sel">${names.map(n => `<option ${nameKey(n) === nameKey(D.student) ? 'selected' : ''}>${esc(n)}</option>`).join('')}</select>` : 'chưa có'}</h2></div>
+        <span class="spacer"></span><button class="btn small" id="refresh">Làm mới</button><button class="btn small" id="paste">Dán mã</button><button class="btn small" id="logout">Đăng xuất</button></div>
+      <div class="teacher-summary kpi4">
+        <div class="summary-stat"><span>Số đề đã làm trên web</span><b>${at.length}</b></div>
+        <div class="summary-stat"><span>Điểm trung bình (web)</span><b>${at.length ? avg + '%' : '–'}</b></div>
+        <div class="summary-stat"><span>Tỉ lệ đề đạt ≥ 75%</span><b>${at.length ? passRate + '%' : '–'}</b></div>
+        <div class="summary-stat"><span>Vòng IOE cao nhất đã đạt</span><b>${best || '–'}</b></div></div>
+      <div class="tabs">${[['track', 'Bảng theo dõi'], ['analysis', 'Phân tích điểm yếu'], ['round', D.edit ? 'Sửa vòng IOE' : 'Nhập vòng IOE']].map(([k, l]) => `<button class="btn small ${D.tab === k ? 'on' : ''}" data-tab="${k}">${l}</button>`).join('')}</div>
+      </section>`;
+    if (!names.length && D.tab !== 'round') body += `<section class="card"><h3>Chưa có kết quả nào</h3><p class="muted">Khi học sinh làm xong một đề trên web, kết quả tự hiện ở đây. Bạn cũng có thể nhập điểm vòng tự luyện IOE ở thẻ "Nhập vòng IOE".</p></section>`;
+    else body += D.tab === 'track' ? trackView(at, rd) : D.tab === 'analysis' ? analysisView(at, rd) : roundForm();
+    $('#app').innerHTML = body;
+    const s = $('#stu'); if (s) s.onchange = () => { D.student = s.value; D.edit = null; dashView(); };
+    $$('[data-tab]').forEach(b => b.onclick = () => { D.tab = b.dataset.tab; if (D.tab !== 'round') D.edit = null; dashView(); });
+    $('#refresh').onclick = load; $('#paste').onclick = openPaste;
+    $('#logout').onclick = async () => { await sb.auth.signOut(); D.attempts = []; D.rounds = []; loginView(); };
+    wireTab();
+  }
+
+  function cell(s, m) { const p = pct(s, m); return `<td class="${p >= 75 ? 'good' : 'bad'}">${+s}/${+m}</td>`; }
+  function trackView(at, rd) {
+    const timeline = [...at.map(x => ({ d: x.created_at, p: pct(+x.total, +x.max_total), l: (SETS[x.set_id] && SETS[x.set_id].short) || x.set_name, web: true })),
+                      ...rd.map(r => { const q = roundPass(r); return { d: r.done_on || r.created_at, p: pct(q.s, q.m), l: 'Vòng ' + r.round_no, web: false }; })]
+      .sort((a, b) => new Date(a.d) - new Date(b.d));
+    return `<section class="card"><div class="chart-title"><span>Điểm tổng theo thời gian</span><span class="note">■ đề trên web · ■ vòng IOE · nét đứt: 75%</span></div>${trendSvg(timeline)}</section>
+    <section class="card"><h3>Đề làm trên web</h3>
+      ${at.length ? `<div class="scroll"><table class="track"><thead><tr><th>Thời gian</th><th>Đề</th><th>Bài 1</th><th>Bài 2</th><th>Bài 3</th><th>Bài 4</th><th>Tổng</th><th>Kết quả</th><th>Làm trong</th><th></th></tr></thead><tbody>
+      ${at.map((x, k) => `<tr><td>${dt(x.created_at)}</td><td>${esc((SETS[x.set_id] && SETS[x.set_id].short) || x.set_name)}</td>${x.scores.map((s, i) => cell(s, x.maxes[i])).join('')}${cell(x.total, x.max_total)}
+        <td><span class="chip ${x.passed ? 'ok' : 'bad'}">${x.passed ? 'Đạt' : 'Chưa đạt'}</span></td><td>${fmt(x.seconds || 0)}</td><td><button class="btn small" data-detail="${k}">Chữa bài</button></td></tr>`).join('')}
+      </tbody></table></div>` : '<p class="muted">Học sinh chưa làm đề nào trên web.</p>'}</section>
+    <section class="card"><div class="row"><h3>Vòng tự luyện IOE</h3><span class="spacer"></span><button class="btn small" data-tab2="round">+ Nhập vòng</button></div>
+      ${rd.length ? `<div class="scroll"><table class="track"><thead><tr><th>Vòng</th><th>Ngày</th><th>Bài 1</th><th>Bài 2</th><th>Bài 3</th><th>Bài 4</th><th>Tổng</th><th>Kết quả</th><th></th></tr></thead><tbody>
+      ${rd.map(r => { const q = roundPass(r); return `<tr><td><b>${r.round_no}</b></td><td>${d8(r.done_on)}</td>${r.bai.map(b => `<td class="${pct(b.score, b.max) >= 75 ? 'good' : 'bad'}"><span class="note">${esc(b.dang)}</span><br>${+b.score}/${+b.max}</td>`).join('')}
+        ${cell(q.s, q.m)}<td><span class="chip ${q.ok ? 'ok' : 'bad'}">${q.ok ? 'Đạt' : 'Chưa đạt'}</span></td>
+        <td><button class="btn small" data-edit="${r.id}">Sửa</button> <button class="btn small ${D.del === r.id ? 'warn' : ''}" data-del="${r.id}">${D.del === r.id ? 'Bấm lần nữa để xoá' : 'Xoá'}</button></td></tr>`; }).join('')}
+      </tbody></table></div>` : '<p class="muted">Chưa nhập vòng nào. Bấm "+ Nhập vòng" để thêm điểm 4 bài của một vòng tự luyện trên ioe.vn.</p>'}</section>`;
+  }
+  function trendSvg(pts) {
+    if (!pts.length) return '<p class="muted">Chưa có dữ liệu.</p>';
+    const W = 640, H = 200, L = 34, B = 34, step = (W - L - 10) / pts.length, bw = Math.min(34, step * .6);
+    const y = p => 10 + (H - B - 10) * (1 - p / 100);
+    return `<div class="scroll"><svg viewBox="0 0 ${W} ${H}" class="trend" role="img" aria-label="Điểm tổng theo thời gian">
+      ${[0, 50, 100].map(v => `<text x="${L - 6}" y="${y(v) + 4}" text-anchor="end" class="ax">${v}%</text><line x1="${L}" x2="${W - 6}" y1="${y(v)}" y2="${y(v)}" class="grid"/>`).join('')}
+      <line x1="${L}" x2="${W - 6}" y1="${y(75)}" y2="${y(75)}" class="pass"/>
+      ${pts.map((p, i) => { const x = L + step * i + (step - bw) / 2; return `<rect x="${x}" y="${y(p.p)}" width="${bw}" height="${y(0) - y(p.p)}" rx="5" class="${p.web ? 'bw' : 'bi'}"><title>${esc(p.l)}: ${p.p}%</title></rect>
+        <text x="${x + bw / 2}" y="${y(p.p) - 5}" text-anchor="middle" class="val">${p.p}</text><text x="${x + bw / 2}" y="${H - 14}" text-anchor="middle" class="ax">${esc(p.l.length > 10 ? p.l.slice(0, 9) + '…' : p.l)}</text>`; }).join('')}
+    </svg></div>`;
+  }
+
+  function rightOf(bai, i, j, ans) {
+    const b = bai[i], a = ans[i];
+    if (b.type === 'match') return a.found.includes(j);
+    return b.type === 'fill' ? (a[j] || '').toLowerCase() === b.items[j].w : a[j] === b.items[j].k;
+  }
+  function hbars(rows) {
+    return `<div class="hbars">${rows.map(r => `<div class="hbar ${r.p < 75 ? 'bad' : ''}"><span class="lbl">${esc(r.l)}</span><span class="bg"><i style="width:${r.p}%"></i><span class="m75"></span></span><span class="num"><b>${r.p}%</b> <span class="note">${esc(r.n)}</span></span></div>`).join('')}</div>`;
+  }
+  function analysisView(at, rd) {
+    const byType = {}, byTag = {};
+    const add = (o, k, s, m) => { o[k] = o[k] || { s: 0, m: 0, c: 0 }; o[k].s += s; o[k].m += m; o[k].c++; };
+    at.forEach(x => {
+      const set = SETS[x.set_id]; if (!set) return;
+      set.bai.forEach((b, i) => {
+        add(byType, TYPE_LABEL[b.type], +x.scores[i], +x.maxes[i]);
+        const n = b.type === 'match' ? b.pairs.length : b.items.length;
+        for (let j = 0; j < n; j++) { const t = tagOf(x.set_id, i, j); if (t) add(byTag, t, rightOf(set.bai, i, j, x.answers) ? 1 : 0, 1); }
+      });
+    });
+    rd.forEach(r => r.bai.forEach(b => add(byType, b.dang, +b.score, +b.max)));
+    const typeRows = Object.entries(byType).map(([l, v]) => ({ l, p: pct(v.s, v.m), n: `${v.c} bài` })).sort((a, b) => a.p - b.p);
+    const tagRows = Object.entries(byTag).map(([l, v]) => ({ l, p: pct(v.s, v.m), n: `${v.s}/${v.m} câu` })).sort((a, b) => a.p - b.p);
+    const weak = [...tagRows.filter(r => r.p < 75).slice(0, 3).map(r => `${r.l} (${r.p}%)`), ...typeRows.filter(r => r.p < 75).slice(0, 2).map(r => `dạng ${r.l} (${r.p}%)`)];
+    return `<section class="card"><h3>Cần ưu tiên luyện</h3>
+      ${weak.length ? `<div class="callout"><b>${esc(D.student)}</b> đang dưới 75% ở: ${weak.map(esc).join(' · ')}.</div>` : `<div class="callout ok">${typeRows.length ? 'Tất cả các phần đều từ 75% trở lên. Có thể tăng độ khó.' : 'Chưa có dữ liệu để phân tích.'}</div>`}
+      <p class="note">Tính trên ${at.length} đề làm trên web và ${rd.length} vòng tự luyện IOE. Nét đứt là mức đạt 75%.</p></section>
+    <section class="card"><h3>Theo dạng bài</h3><p class="note">Gộp cả đề trên web và vòng tự luyện IOE.</p>${typeRows.length ? hbars(typeRows) : '<p class="muted">Chưa có dữ liệu.</p>'}</section>
+    <section class="card"><h3>Theo kỹ năng</h3><p class="note">Tính từ từng câu trong các đề trên web.</p>${tagRows.length ? hbars(tagRows) : '<p class="muted">Chưa có dữ liệu.</p>'}</section>`;
+  }
+
+  function roundForm() {
+    const e = D.edit ? D.rounds.find(r => r.id === D.edit) : null;
+    const no = e ? e.round_no : (mine(D.rounds).reduce((m, r) => Math.max(m, r.round_no), 0) + 1);
+    const bai = e ? e.bai : (ROUND_FMT[no] || [['Nối từ', 60], ['Nghe', 100], ['Đọc hiểu', 100], ['Điền từ', 100]]).map(([dang, max]) => ({ dang, score: '', max }));
+    return `<section class="card"><h3>${e ? 'Sửa' : 'Nhập'} điểm vòng tự luyện IOE</h3>
+      <p class="note">Vòng 1–8 đã điền sẵn dạng bài theo đề năm 2026–2027. Bài nối từ tối đa 60 điểm, các bài khác 100 điểm.</p>
+      <div class="fgrid">
+        <div class="field"><label for="r-stu">Học sinh</label><input id="r-stu" list="r-stus" value="${esc(e ? e.student : (D.student || ''))}"><datalist id="r-stus">${students().map(n => `<option value="${esc(n)}">`).join('')}</datalist></div>
+        <div class="field"><label for="r-no">Vòng số</label><input id="r-no" type="number" min="1" max="60" value="${no}" ${e ? 'disabled' : ''}></div>
+        <div class="field"><label for="r-date">Ngày làm</label><input id="r-date" type="date" value="${e && e.done_on ? e.done_on : new Date().toISOString().slice(0, 10)}"></div></div>
+      ${bai.map((b, i) => `<div class="fgrid"><div class="field"><label for="r-d${i}">Bài ${i + 1} · dạng</label><select id="r-d${i}" class="sel">${DANG.map(x => `<option ${x === b.dang ? 'selected' : ''}>${x}</option>`).join('')}</select></div>
+        <div class="field"><label for="r-s${i}">Điểm</label><input id="r-s${i}" type="number" min="0" step="5" value="${b.score}"></div>
+        <div class="field"><label for="r-m${i}">Tối đa</label><input id="r-m${i}" type="number" min="1" step="10" value="${b.max}"></div></div>`).join('')}
+      <div class="field"><label for="r-note">Ghi chú (không bắt buộc)</label><input id="r-note" value="${esc(e && e.note || '')}"></div>
+      <div class="row"><button class="btn go" id="r-save">Lưu vòng</button>${e ? '<button class="btn" id="r-cancel">Huỷ sửa</button>' : ''}<span id="r-msg" class="note"></span></div></section>`;
+  }
+
+  function wireTab() {
+    $$('[data-detail]').forEach(b => b.onclick = () => {
+      const x = mine(D.attempts)[+b.dataset.detail];
+      if (!SETS[x.set_id]) return;
+      useSet(x.set_id);
+      T.r = { id: x.set_id, n: x.student, at: x.created_at, s: x.seconds || 0, u: x.per_bai_seconds || [0, 0, 0, 0], a: x.answers };
+      T.all = false; tReview(); window.scrollTo(0, 0);
+      const back = $('#back'); if (back) back.textContent = '← Về bảng theo dõi';
+    });
+    $$('[data-tab2]').forEach(b => b.onclick = () => { D.tab = 'round'; D.edit = null; dashView(); });
+    $$('[data-edit]').forEach(b => b.onclick = () => { D.edit = b.dataset.edit; D.tab = 'round'; dashView(); });
+    $$('[data-del]').forEach(b => b.onclick = async () => {
+      if (D.del !== b.dataset.del) { D.del = b.dataset.del; return dashView(); }
+      const { error } = await sb.from('ioe_rounds').delete().eq('id', D.del); D.del = null;
+      if (error) D.msg = error.message; await load();
+    });
+    const no = $('#r-no');
+    if (no && !D.edit) no.oninput = () => { const f = ROUND_FMT[+no.value]; if (f) f.forEach(([dang, max], i) => { $('#r-d' + i).value = dang; $('#r-m' + i).value = max; }); };
+    for (let i = 0; i < 4; i++) { const d = $('#r-d' + i); if (d) d.onchange = () => { $('#r-m' + i).value = d.value === 'Nối từ' ? 60 : 100; }; }
+    const save = $('#r-save');
+    if (save) save.onclick = async () => {
+      const msg = t => $('#r-msg').textContent = t;
+      const student = normName($('#r-stu').value), round_no = +$('#r-no').value;
+      const bai = [0, 1, 2, 3].map(i => ({ dang: $('#r-d' + i).value, score: +$('#r-s' + i).value, max: +$('#r-m' + i).value }));
+      if (!student) return msg('Nhập tên học sinh (giống tên học sinh gõ khi làm bài trên web).');
+      if (!(round_no >= 1)) return msg('Nhập số vòng.');
+      if (bai.some(b => $('#r-s' + bai.indexOf(b)).value === '' || b.score < 0 || b.score > b.max)) return msg('Điểm mỗi bài phải từ 0 đến điểm tối đa.');
+      msg('Đang lưu…');
+      const row = { student, round_no, done_on: $('#r-date').value || null, bai, note: $('#r-note').value.trim() || null };
+      const { error } = D.edit ? await sb.from('ioe_rounds').update(row).eq('id', D.edit) : await sb.from('ioe_rounds').upsert(row, { onConflict: 'student,round_no' });
+      if (error) return msg('Chưa lưu được: ' + error.message);
+      D.edit = null; D.tab = 'track'; D.student = student; await load();
+    };
+    const c = $('#r-cancel'); if (c) c.onclick = () => { D.edit = null; D.tab = 'track'; dashView(); };
+  }
+
+  dashStart();
+}
+
+</script>
 </body>
 </html>

@@ -38,6 +38,23 @@ h1,h2,h3{font-family:var(--font-display);line-height:1.2;margin:0;text-wrap:bala
 @media(max-width:560px){.welcome{display:block}.welcome-mascot{position:absolute;top:21px;right:21px;margin:0}.welcome-copy>.eyebrow{padding-right:55px;max-width:100%;min-height:60px;display:flex;align-items:center}.welcome h1{padding-right:0}.section-label>.note{text-align:right;max-width:130px;flex:none}}
 
 
+.tabs{display:flex;gap:8px;flex-wrap:wrap}.kpi4{grid-template-columns:repeat(4,minmax(0,1fr))}
+.sel{font:inherit;font-size:inherit;border:2px solid var(--line);border-radius:14px;background:var(--bg);color:var(--ink);padding:6px 12px;max-width:100%}
+h2 .sel{font:800 24px var(--font-display)}
+.track{width:100%;border-collapse:collapse;font-size:15px}.track th,.track td{padding:10px 8px;border-bottom:1px solid var(--line);text-align:left;white-space:nowrap;vertical-align:middle}
+.track th{font-size:12px;text-transform:uppercase;letter-spacing:.06em;color:var(--muted)}.track td.good{color:var(--ok);font-weight:800}.track td.bad{color:var(--bad);font-weight:800}
+.scroll{overflow-x:auto;min-width:0}.trend{width:100%;min-width:420px;height:auto}.trend .ax{font-size:11px;fill:var(--muted)}.trend .val{font-size:11px;font-weight:800;fill:var(--ink)}
+.trend .grid{stroke:var(--line)}.trend .pass{stroke:var(--muted);stroke-dasharray:5 4}.trend .bw{fill:var(--sky)}.trend .bi{fill:var(--peach)}
+.chart-title{display:flex;justify-content:space-between;gap:10px;font-weight:900;flex-wrap:wrap}
+.hbars{display:grid;gap:12px}.hbar{display:grid;grid-template-columns:minmax(120px,230px) minmax(0,1fr) auto;gap:14px;align-items:center}
+.hbar .bg{position:relative;height:14px;background:var(--line);border-radius:999px}.hbar i{display:block;height:100%;border-radius:999px;background:var(--ok)}
+.hbar.bad i{background:var(--bad)}.hbar .m75{position:absolute;left:75%;top:-4px;bottom:-4px;border-left:2px dashed var(--muted)}.hbar .num{white-space:nowrap}
+.callout{background:var(--bad-soft);border-radius:16px;padding:14px 18px;line-height:1.7}.callout.ok{background:var(--ok-soft)}
+.fgrid{display:grid;grid-template-columns:repeat(3,minmax(0,1fr));gap:12px}
+#send-status{justify-content:space-between;flex-wrap:wrap}
+@media(max-width:850px){.kpi4{grid-template-columns:repeat(2,minmax(0,1fr))}.hbar{grid-template-columns:1fr;gap:4px}}
+@media(max-width:560px){.fgrid{grid-template-columns:1fr}.kpi4{grid-template-columns:1fr}}
+
 .hub{display:grid;grid-template-columns:repeat(3,minmax(0,1fr));gap:16px}
 .hub a{text-decoration:none;color:var(--ink)}
 .hub .rule{height:100%;transition:transform .15s}
@@ -55,12 +72,12 @@ h1,h2,h3{font-family:var(--font-display);line-height:1.2;margin:0;text-wrap:bala
   <div class="welcome"><div class="welcome-copy">
     <span class="eyebrow">Luyện IOE lớp 6</span>
     <h1>Hôm nay mình làm bài nào?</h1>
-    <p class="muted">Chọn đúng bài cô giao. Làm xong, bấm "Sao chép mã" và gửi mã cho cô.</p>
+    <p class="muted">Chọn đúng bài cô giao. Làm xong, kết quả tự gửi cho cô.</p>
   </div><img class="welcome-mascot" src="img/fox-hello.png" alt=""></div>
   <div class="hub">
     <a href="on-tap-buoi-1-2.html"><div class="rule b1"><img class="rule-mascot" src="img/bai2-bunny.png" alt=""><span class="eyebrow">Trên lớp · buổi 3</span><b>Thi thử ôn tập buổi 1–2</b><span class="pts">30 phút · nối cặp, nghe, điền chữ, trắc nghiệm</span><span class="go-line">Bắt đầu →</span></div></a><a href="luyen-tap-buoi-3.html"><div class="rule b0"><img class="rule-mascot" src="img/bai3-bear.png" alt=""><span class="eyebrow">Trên lớp · buổi 3</span><b>Luyện tập: thì hiện tại hoàn thành</b><span class="pts">20 phút · V3, nghe, điền chữ, trắc nghiệm</span><span class="go-line">Bắt đầu →</span></div></a><a href="btvn-buoi-3.html"><div class="rule b2"><img class="rule-mascot" src="img/bai4-owl.png" alt=""><span class="eyebrow">Về nhà · nộp buổi 4</span><b>Bài về nhà buổi 3: cơ thể người</b><span class="pts">30 phút · từ vựng, nghe, điền chữ, trắc nghiệm</span><span class="go-line">Bắt đầu →</span></div></a>
   </div>
-  <a class="teacher-link" href="giao-vien.html"><img src="img/owl-teacher.png" alt=""><span><b>Dành cho giáo viên</b><br><span class="note">Dán mã kết quả để chữa bài, hoặc xem đề và lời giải</span></span></a>
+  <a class="teacher-link" href="giao-vien.html"><img src="img/owl-teacher.png" alt=""><span><b>Dành cho giáo viên</b><br><span class="note">Theo dõi tiến độ, chữa bài, nhập điểm vòng tự luyện IOE</span></span></a>
 </main>
 </body>
 </html>
