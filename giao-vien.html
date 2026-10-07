@@ -44,7 +44,7 @@ h2 .sel{font:800 24px var(--font-display)}
 .track{width:100%;border-collapse:collapse;font-size:15px}.track th,.track td{padding:10px 8px;border-bottom:1px solid var(--line);text-align:left;white-space:nowrap;vertical-align:middle}
 .track th{font-size:12px;text-transform:uppercase;letter-spacing:.06em;color:var(--muted)}.track td.good{color:var(--ok);font-weight:800}.track td.bad{color:var(--bad);font-weight:800}
 .scroll{overflow-x:auto;min-width:0}.trend{width:100%;min-width:420px;height:auto}.trend .ax{font-size:11px;fill:var(--muted)}.trend .val{font-size:11px;font-weight:800;fill:var(--ink)}
-.trend .grid{stroke:var(--line)}.trend .pass{stroke:var(--muted);stroke-dasharray:5 4}.trend .bw{fill:var(--sky)}.trend .bi{fill:var(--peach)}
+.trend .grid{stroke:var(--line)}.trend .pass{stroke:var(--muted);stroke-dasharray:5 4}.trend .bw{fill:var(--sky)}.trend .bi{fill:var(--peach)}.trend .bp{fill:var(--teach)}.lg.bw{color:var(--sky)}.lg.bi{color:var(--peach)}.lg.bp{color:var(--teach)}.track.wrap td{white-space:normal;min-width:90px}
 .chart-title{display:flex;justify-content:space-between;gap:10px;font-weight:900;flex-wrap:wrap}
 .hbars{display:grid;gap:12px}.hbar{display:grid;grid-template-columns:minmax(120px,230px) minmax(0,1fr) auto;gap:14px;align-items:center}
 .hbar .bg{position:relative;height:14px;background:var(--line);border-radius:999px}.hbar i{display:block;height:100%;border-radius:999px;background:var(--ok)}
@@ -910,7 +910,7 @@ if (MODE === 'teacher') {
     3: [['Sắp xếp câu', 100], ['Đọc hiểu', 100], ['Nối từ', 60], ['Nghe', 100]], 4: [['Điền từ', 100], ['Nối từ', 60], ['Đọc hiểu', 100], ['Nghe', 100]],
     5: [['Nối từ', 60], ['Đọc hiểu', 100], ['Điền từ', 100], ['Nghe', 100]], 6: [['Đọc hiểu', 100], ['Nghe', 100], ['Nối từ', 60], ['Nghe', 100]],
     7: [['Nối từ', 60], ['Đọc hiểu', 100], ['Điền từ', 100], ['Nghe', 100]], 8: [['Điền từ', 100], ['Đọc hiểu', 100], ['Nối từ', 60], ['Nghe', 100]] };
-  const D = { tab: 'track', student: null, attempts: [], rounds: [], msg: '', edit: null, del: null };
+  const D = { tab: 'track', student: null, attempts: [], rounds: [], papers: [], msg: '', edit: null, del: null };
   const pct = (s, m) => m ? Math.round(s / m * 100) : 0;
   const dt = s => new Date(s).toLocaleString('vi-VN', { day: '2-digit', month: '2-digit', hour: '2-digit', minute: '2-digit' });
   const d8 = s => s ? new Date(s).toLocaleDateString('vi-VN', { day: '2-digit', month: '2-digit' }) : '';
@@ -960,23 +960,24 @@ if (MODE === 'teacher') {
     $('#app').innerHTML = '<section class="card"><p class="muted">Đang tải dữ liệu…</p></section>';
     const [t, a, r] = await Promise.all([sb.from('teachers').select('email'), sb.from('attempts').select('*').order('created_at', { ascending: false }).limit(2000),
       sb.from('ioe_rounds').select('*').order('round_no')]);
+    const pp = await sb.from('paper_tests').select('*').order('done_on', { ascending: false });
     if (t.error || a.error || r.error) { D.msg = 'Không tải được dữ liệu: ' + (t.error || a.error || r.error).message; await sb.auth.signOut(); return loginView(); }
     if (!t.data.length) { D.msg = 'Tài khoản này chưa được cấp quyền giáo viên.'; await sb.auth.signOut(); return loginView(); }
-    D.attempts = a.data; D.rounds = r.data;
+    D.attempts = a.data; D.rounds = r.data; D.papers = pp.error ? [] : pp.data;
     const names = students();
     if (!D.student || !names.some(n => nameKey(n) === nameKey(D.student))) D.student = names[0] || null;
     dashView();
   }
   function students() {
     const m = new Map();
-    [...D.attempts, ...D.rounds].forEach(x => { const k = nameKey(x.student); if (!m.has(k)) m.set(k, normName(x.student)); });
+    [...D.attempts, ...D.rounds, ...D.papers].forEach(x => { const k = nameKey(x.student); if (!m.has(k)) m.set(k, normName(x.student)); });
     return [...m.values()];
   }
   const mine = arr => arr.filter(x => nameKey(x.student) === nameKey(D.student));
   const roundPass = r => { const s = r.bai.reduce((a, b) => a + (+b.score || 0), 0), m = r.bai.reduce((a, b) => a + (+b.max || 0), 0); return { s, m, ok: r.bai.every(b => +b.score >= +b.max * .75) && s >= m * .75 }; };
 
   function dashView() {
-    const names = students(), at = mine(D.attempts), rd = mine(D.rounds);
+    const names = students(), at = mine(D.attempts), rd = mine(D.rounds), pp = mine(D.papers);
     const avg = at.length ? Math.round(at.reduce((s, x) => s + pct(+x.total, +x.max_total), 0) / at.length) : 0;
     const passRate = at.length ? Math.round(at.filter(x => x.passed).length / at.length * 100) : 0;
     const best = rd.filter(r => roundPass(r).ok).reduce((m, r) => Math.max(m, r.round_no), 0);
@@ -992,7 +993,7 @@ if (MODE === 'teacher') {
       <div class="tabs">${[['track', 'Bảng theo dõi'], ['hw', `Chấm chữa BTVN${ungraded(at) ? ' · ' + ungraded(at) + ' bài mới' : ''}`], ['analysis', 'Phân tích điểm yếu'], ['round', D.edit ? 'Sửa vòng IOE' : 'Nhập vòng IOE']].map(([k, l]) => `<button class="btn small ${D.tab === k ? 'on' : ''}" data-tab="${k}">${l}</button>`).join('')}</div>
       </section>`;
     if (!names.length && D.tab !== 'round') body += `<section class="card"><h3>Chưa có kết quả nào</h3><p class="muted">Khi học sinh làm xong một đề trên web, kết quả tự hiện ở đây. Bạn cũng có thể nhập điểm vòng tự luyện IOE ở thẻ "Nhập vòng IOE".</p></section>`;
-    else body += D.tab === 'track' ? trackView(at, rd) : D.tab === 'hw' ? hwList(at) : D.tab === 'analysis' ? analysisView(at, rd) : roundForm();
+    else body += D.tab === 'track' ? trackView(at, rd, pp) : D.tab === 'hw' ? hwList(at) : D.tab === 'analysis' ? analysisView(at, rd, pp) : roundForm();
     $('#app').innerHTML = body;
     const s = $('#stu'); if (s) s.onchange = () => { D.student = s.value; D.edit = null; dashView(); };
     $$('[data-tab]').forEach(b => b.onclick = () => { D.tab = b.dataset.tab; if (D.tab !== 'round') D.edit = null; dashView(); });
@@ -1057,17 +1058,40 @@ if (MODE === 'teacher') {
     $('#app').prepend(panel); panel.prepend($('#back'));
   }
 
+  function paperView(x) {
+    window.scrollTo(0, 0);
+    const types = Object.entries(x.by_type).map(([l, v]) => ({ l, p: pct(v[0], v[1]), n: `${v[0]}/${v[1]} câu` })).sort((a, b) => a.p - b.p);
+    const wr = x.wrong.filter(w => w.student !== '(chưa làm kịp)'), skip = x.wrong.length - wr.length;
+    $('#app').innerHTML = `<section class="card"><div class="row"><button class="btn small" id="p-back">← Về bảng theo dõi</button></div>
+      <div class="eyebrow">${esc(x.student)} · ${d8(x.done_on)}</div><h2>${esc(x.title)}</h2>
+      <div class="teacher-summary kpi4"><div class="summary-stat"><span>Điểm (thang 2000)</span><b>${x.score2000}</b></div>
+        <div class="summary-stat"><span>Câu đúng</span><b>${x.correct}/${x.total_q}</b></div>
+        <div class="summary-stat"><span>Câu làm sai</span><b>${wr.length}</b></div><div class="summary-stat"><span>Chưa làm kịp</span><b>${skip}</b></div></div>
+      ${x.note ? `<div class="callout ok">${esc(x.note)}</div>` : ''}
+      <h3>Theo dạng bài (câu đã làm)</h3>${hbars(types)}</section>
+      <section class="card"><h3>Các câu làm sai (${wr.length})</h3><div class="scroll"><table class="track wrap"><thead><tr><th>Câu</th><th>Dạng</th><th>Đề bài</th><th>HS làm</th><th>Đáp án</th><th>Ghi chú</th></tr></thead><tbody>
+      ${wr.map(w => `<tr><td><b>${w.q}</b></td><td>${esc(w.type)}</td><td>${esc(w.question)}</td><td class="bad">${esc(w.student)}</td><td class="good">${esc(w.key)}</td><td class="note">${esc(w.note)}</td></tr>`).join('')}
+      </tbody></table></div></section>
+      ${skip ? `<section class="card"><h3>Câu chưa làm kịp (${skip})</h3><p class="note">${x.wrong.filter(w => w.student === '(chưa làm kịp)').map(w => w.q).join(', ')}</p></section>` : ''}`;
+    $('#p-back').onclick = () => dashView();
+  }
+
   function cell(s, m) { const p = pct(s, m); return `<td class="${p >= 75 ? 'good' : 'bad'}">${+s}/${+m}</td>`; }
-  function trackView(at, rd) {
+  function trackView(at, rd, pp) {
     const timeline = [...at.map(x => ({ d: x.created_at, p: pct(+x.total, +x.max_total), l: (SETS[x.set_id] && SETS[x.set_id].short) || x.set_name, web: true })),
-                      ...rd.map(r => { const q = roundPass(r); return { d: r.done_on || r.created_at, p: pct(q.s, q.m), l: 'Vòng ' + r.round_no, web: false }; })]
+                      ...rd.map(r => { const q = roundPass(r); return { d: r.done_on || r.created_at, p: pct(q.s, q.m), l: 'Vòng ' + r.round_no, web: false }; }),
+                      ...pp.map(x => ({ d: x.done_on || x.created_at, p: pct(x.score2000, 2000), l: x.title.split(' –')[0] + ' giấy', paper: true }))]
       .sort((a, b) => new Date(a.d) - new Date(b.d));
-    return `<section class="card"><div class="chart-title"><span>Điểm tổng theo thời gian</span><span class="note">■ đề trên web · ■ vòng IOE · nét đứt: 75%</span></div>${trendSvg(timeline)}</section>
+    return `<section class="card"><div class="chart-title"><span>Điểm tổng theo thời gian</span><span class="note"><span class="lg bw">■</span> đề trên web · <span class="lg bp">■</span> đề giấy · <span class="lg bi">■</span> vòng IOE · nét đứt: 75%</span></div>${trendSvg(timeline)}</section>
     <section class="card"><h3>Đề làm trên web</h3>
       ${at.length ? `<div class="scroll"><table class="track"><thead><tr><th>Thời gian</th><th>Đề</th><th>Bài 1</th><th>Bài 2</th><th>Bài 3</th><th>Bài 4</th><th>Tổng</th><th>Kết quả</th><th>Làm trong</th><th></th></tr></thead><tbody>
       ${at.map((x, k) => `<tr><td>${dt(x.created_at)}</td><td>${esc((SETS[x.set_id] && SETS[x.set_id].short) || x.set_name)}</td>${x.scores.map((s, i) => cell(s, x.maxes[i])).join('')}${cell(x.total, x.max_total)}
         <td><span class="chip ${x.passed ? 'ok' : 'bad'}">${x.passed ? 'Đạt' : 'Chưa đạt'}</span></td><td>${fmt(x.seconds || 0)}</td><td><button class="btn small" data-detail="${k}">Chữa bài</button></td></tr>`).join('')}
       </tbody></table></div>` : '<p class="muted">Học sinh chưa làm đề nào trên web.</p>'}</section>
+    <section class="card"><h3>Đề làm trên giấy</h3>
+      ${pp.length ? `<div class="scroll"><table class="track"><thead><tr><th>Ngày</th><th>Đề</th><th>Câu đúng</th><th>Điểm (thang 2000)</th><th>Làm kịp</th><th></th></tr></thead><tbody>
+      ${pp.map(x => `<tr><td>${d8(x.done_on)}</td><td>${esc(x.title)}</td>${cell(x.correct, x.total_q)}<td><b>${x.score2000}</b></td><td>${x.answered ?? x.total_q}/${x.total_q}</td><td><button class="btn small" data-paper="${x.id}">Xem câu sai</button></td></tr>`).join('')}
+      </tbody></table></div>` : '<p class="muted">Chưa có đề giấy nào.</p>'}</section>
     <section class="card"><div class="row"><h3>Vòng tự luyện IOE</h3><span class="spacer"></span><button class="btn small" data-tab2="round">+ Nhập vòng</button></div>
       ${rd.length ? `<div class="scroll"><table class="track"><thead><tr><th>Vòng</th><th>Ngày</th><th>Bài 1</th><th>Bài 2</th><th>Bài 3</th><th>Bài 4</th><th>Tổng</th><th>Kết quả</th><th></th></tr></thead><tbody>
       ${rd.map(r => { const q = roundPass(r); return `<tr><td><b>${r.round_no}</b></td><td>${d8(r.done_on)}</td>${r.bai.map(b => `<td class="${pct(b.score, b.max) >= 75 ? 'good' : 'bad'}"><span class="note">${esc(b.dang)}</span><br>${+b.score}/${+b.max}</td>`).join('')}
@@ -1082,7 +1106,7 @@ if (MODE === 'teacher') {
     return `<div class="scroll"><svg viewBox="0 0 ${W} ${H}" class="trend" role="img" aria-label="Điểm tổng theo thời gian">
       ${[0, 50, 100].map(v => `<text x="${L - 6}" y="${y(v) + 4}" text-anchor="end" class="ax">${v}%</text><line x1="${L}" x2="${W - 6}" y1="${y(v)}" y2="${y(v)}" class="grid"/>`).join('')}
       <line x1="${L}" x2="${W - 6}" y1="${y(75)}" y2="${y(75)}" class="pass"/>
-      ${pts.map((p, i) => { const x = L + step * i + (step - bw) / 2; return `<rect x="${x}" y="${y(p.p)}" width="${bw}" height="${y(0) - y(p.p)}" rx="5" class="${p.web ? 'bw' : 'bi'}"><title>${esc(p.l)}: ${p.p}%</title></rect>
+      ${pts.map((p, i) => { const x = L + step * i + (step - bw) / 2; return `<rect x="${x}" y="${y(p.p)}" width="${bw}" height="${y(0) - y(p.p)}" rx="5" class="${p.web ? 'bw' : p.paper ? 'bp' : 'bi'}"><title>${esc(p.l)}: ${p.p}%</title></rect>
         <text x="${x + bw / 2}" y="${y(p.p) - 5}" text-anchor="middle" class="val">${p.p}</text><text x="${x + bw / 2}" y="${H - 14}" text-anchor="middle" class="ax">${esc(p.l.length > 10 ? p.l.slice(0, 9) + '…' : p.l)}</text>`; }).join('')}
     </svg></div>`;
   }
@@ -1095,7 +1119,7 @@ if (MODE === 'teacher') {
   function hbars(rows) {
     return `<div class="hbars">${rows.map(r => `<div class="hbar ${r.p < 75 ? 'bad' : ''}"><span class="lbl">${esc(r.l)}</span><span class="bg"><i style="width:${r.p}%"></i><span class="m75"></span></span><span class="num"><b>${r.p}%</b> <span class="note">${esc(r.n)}</span></span></div>`).join('')}</div>`;
   }
-  function analysisView(at, rd) {
+  function analysisView(at, rd, pp) {
     const byType = {}, byTag = {};
     const add = (o, k, s, m) => { o[k] = o[k] || { s: 0, m: 0, c: 0 }; o[k].s += s; o[k].m += m; o[k].c++; };
     at.forEach(x => {
@@ -1107,12 +1131,13 @@ if (MODE === 'teacher') {
       });
     });
     rd.forEach(r => r.bai.forEach(b => add(byType, b.dang, +b.score, +b.max)));
+    pp.forEach(x => Object.entries(x.by_type).forEach(([t, v]) => add(byType, t, v[0], v[1])));
     const typeRows = Object.entries(byType).map(([l, v]) => ({ l, p: pct(v.s, v.m), n: `${v.c} bài` })).sort((a, b) => a.p - b.p);
     const tagRows = Object.entries(byTag).map(([l, v]) => ({ l, p: pct(v.s, v.m), n: `${v.s}/${v.m} câu` })).sort((a, b) => a.p - b.p);
     const weak = [...tagRows.filter(r => r.p < 75).slice(0, 3).map(r => `${r.l} (${r.p}%)`), ...typeRows.filter(r => r.p < 75).slice(0, 2).map(r => `dạng ${r.l} (${r.p}%)`)];
     return `<section class="card"><h3>Cần ưu tiên luyện</h3>
       ${weak.length ? `<div class="callout"><b>${esc(D.student)}</b> đang dưới 75% ở: ${weak.map(esc).join(' · ')}.</div>` : `<div class="callout ok">${typeRows.length ? 'Tất cả các phần đều từ 75% trở lên. Có thể tăng độ khó.' : 'Chưa có dữ liệu để phân tích.'}</div>`}
-      <p class="note">Tính trên ${at.length} đề làm trên web và ${rd.length} vòng tự luyện IOE. Nét đứt là mức đạt 75%.</p></section>
+      <p class="note">Tính trên ${at.length} đề làm trên web, ${pp.length} đề giấy và ${rd.length} vòng tự luyện IOE. Đề giấy chỉ tính các câu đã làm. Nét đứt là mức đạt 75%.</p></section>
     <section class="card"><h3>Theo dạng bài</h3><p class="note">Gộp cả đề trên web và vòng tự luyện IOE.</p>${typeRows.length ? hbars(typeRows) : '<p class="muted">Chưa có dữ liệu.</p>'}</section>
     <section class="card"><h3>Theo kỹ năng</h3><p class="note">Tính từ từng câu trong các đề trên web.</p>${tagRows.length ? hbars(tagRows) : '<p class="muted">Chưa có dữ liệu.</p>'}</section>`;
   }
@@ -1144,6 +1169,7 @@ if (MODE === 'teacher') {
       T.all = false; tReview(); window.scrollTo(0, 0);
       const back = $('#back'); if (back) back.textContent = '← Về bảng theo dõi';
     });
+    $$('[data-paper]').forEach(b => b.onclick = () => paperView(D.papers.find(x => x.id === b.dataset.paper)));
     $$('[data-grade]').forEach(b => b.onclick = () => openGrade(D.attempts.find(x => x.id === b.dataset.grade)));
     $$('[data-tab2]').forEach(b => b.onclick = () => { D.tab = 'round'; D.edit = null; dashView(); });
     $$('[data-edit]').forEach(b => b.onclick = () => { D.edit = b.dataset.edit; D.tab = 'round'; dashView(); });

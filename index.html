@@ -44,7 +44,7 @@ h2 .sel{font:800 24px var(--font-display)}
 .track{width:100%;border-collapse:collapse;font-size:15px}.track th,.track td{padding:10px 8px;border-bottom:1px solid var(--line);text-align:left;white-space:nowrap;vertical-align:middle}
 .track th{font-size:12px;text-transform:uppercase;letter-spacing:.06em;color:var(--muted)}.track td.good{color:var(--ok);font-weight:800}.track td.bad{color:var(--bad);font-weight:800}
 .scroll{overflow-x:auto;min-width:0}.trend{width:100%;min-width:420px;height:auto}.trend .ax{font-size:11px;fill:var(--muted)}.trend .val{font-size:11px;font-weight:800;fill:var(--ink)}
-.trend .grid{stroke:var(--line)}.trend .pass{stroke:var(--muted);stroke-dasharray:5 4}.trend .bw{fill:var(--sky)}.trend .bi{fill:var(--peach)}
+.trend .grid{stroke:var(--line)}.trend .pass{stroke:var(--muted);stroke-dasharray:5 4}.trend .bw{fill:var(--sky)}.trend .bi{fill:var(--peach)}.trend .bp{fill:var(--teach)}.lg.bw{color:var(--sky)}.lg.bi{color:var(--peach)}.lg.bp{color:var(--teach)}.track.wrap td{white-space:normal;min-width:90px}
 .chart-title{display:flex;justify-content:space-between;gap:10px;font-weight:900;flex-wrap:wrap}
 .hbars{display:grid;gap:12px}.hbar{display:grid;grid-template-columns:minmax(120px,230px) minmax(0,1fr) auto;gap:14px;align-items:center}
 .hbar .bg{position:relative;height:14px;background:var(--line);border-radius:999px}.hbar i{display:block;height:100%;border-radius:999px;background:var(--ok)}
@@ -84,10 +84,16 @@ h2 .sel{font:800 24px var(--font-display)}
     <div id="fix-list" class="fix-list"></div>
     <form id="fix-who" class="row" hidden><label for="fix-name" class="note">Tên của em:</label><input id="fix-name" class="sel" autocomplete="off"><button class="btn small">Xem bài cần chữa</button></form>
   </section>
+  <section class="card" id="hist-sec" hidden>
+    <div class="section-label"><h2>Lịch sử bài làm</h2><span class="note" id="hist-who"></span></div>
+    <div class="scroll"><table class="hist"><thead><tr><th>Ngày</th><th>Bài</th><th>Điểm</th><th>Kết quả</th></tr></thead><tbody id="hist-body"></tbody></table></div>
+  </section>
   <a class="teacher-link" href="giao-vien.html"><img src="img/owl-teacher.png" alt=""><span><b>Dành cho giáo viên</b><br><span class="note">Theo dõi tiến độ, chữa bài, nhập điểm vòng tự luyện IOE</span></span></a>
 </main>
 <style>.fix-list{display:grid;gap:12px}.fix-item{display:flex;align-items:center;gap:14px;flex-wrap:wrap;padding:16px 18px;border-radius:18px;background:var(--bad-soft);color:var(--ink);text-decoration:none;border:1px solid var(--line)}
-.fix-item.done{background:var(--ok-soft)}.fix-item b{font:800 19px var(--font-display)}.fix-item .spacer{flex:1}.sel{font:inherit;border:2px solid var(--line);border-radius:14px;background:var(--bg);color:var(--ink);padding:8px 12px}</style>
+.fix-item.done{background:var(--ok-soft)}.fix-item b{font:800 19px var(--font-display)}.fix-item .spacer{flex:1}.sel{font:inherit;border:2px solid var(--line);border-radius:14px;background:var(--bg);color:var(--ink);padding:8px 12px}
+.hist{width:100%;border-collapse:collapse;font-size:15px}.hist th,.hist td{text-align:left;padding:10px 8px;border-bottom:1px solid var(--line);white-space:nowrap}.hist th{font-size:12px;text-transform:uppercase;letter-spacing:.06em;color:var(--muted)}.hist td.t{white-space:normal}
+</style>
 <script>
 (function () {
   const SB_URL = 'https://oywgqkbhhydcdftbgpau.supabase.co', SB_KEY = 'eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJpc3MiOiJzdXBhYmFzZSIsInJlZiI6Im95d2dxa2JoaHlkY2RmdGJncGF1Iiwicm9sZSI6ImFub24iLCJpYXQiOjE3OTEzODExMDQsImV4cCI6MjEwNjk1NzEwNH0.POFHUhiVNlLLZTeow1DxfqeiPJbwne6Nx9cGbob-Qb4', PAGE_OF = {"buoi3-v1": "on-tap-buoi-1-2.html", "b3-luyentap": "luyen-tap-buoi-3.html", "b3-btvn": "btvn-buoi-3.html"};
@@ -103,8 +109,19 @@ h2 .sel{font:800 24px var(--font-display)}
     list.innerHTML = rows.length ? rows.map(x => `<a class="fix-item ${x.corrected ? 'done' : ''}" href="${PAGE_OF[x.set_id]}?chua=${x.id}"><b>${esc(x.set_name || '')}</b><span class="note">nộp ngày ${new Date(x.created_at).toLocaleDateString('vi-VN')} · ${+x.total}/${+x.max_total} điểm</span><span class="spacer"></span><span class="btn small">${x.corrected ? '✓ Đã gửi bài chữa · xem lại' : 'Chữa bài →'}</span></a>`).join('')
       : '<p class="muted">Chưa có bài nào cô chia sẻ để chữa.</p>';
   }
-  who.onsubmit = e => { e.preventDefault(); const n = document.getElementById('fix-name').value.trim(); try { localStorage.setItem('ts-name', n); } catch (er) {} look(n); };
-  look(name);
+  async function history(n) {
+    const hs = document.getElementById('hist-sec'); if (!n) { hs.hidden = true; return; }
+    let rows = [];
+    try { const r = await fetch(SB_URL + '/rest/v1/rpc/student_history', { method: 'POST', headers: { apikey: SB_KEY, Authorization: 'Bearer ' + SB_KEY, 'Content-Type': 'application/json' }, body: JSON.stringify({ p_student: n }) }); if (r.ok) rows = await r.json(); } catch (e) {}
+    hs.hidden = !rows.length; document.getElementById('hist-who').textContent = n;
+    document.getElementById('hist-body').innerHTML = rows.map(x => {
+      const d = new Date(x.done_at).toLocaleDateString('vi-VN');
+      if (x.kind === 'paper') return `<tr><td>${d}</td><td class="t">${esc(x.title)}</td><td><b>${+x.score}</b>/2000</td><td><span class="note">${x.detail.correct}/${x.detail.total} câu đúng</span></td></tr>`;
+      const ok = x.passed; return `<tr><td>${d}</td><td class="t">${esc(x.title || '')}</td><td><b>${+x.score}</b>/${+x.max_score}</td><td><span class="chip ${ok ? 'ok' : 'bad'}">${ok ? 'Đạt' : 'Chưa đạt'}</span></td></tr>`;
+    }).join('');
+  }
+  who.onsubmit = e => { e.preventDefault(); const n = document.getElementById('fix-name').value.trim(); try { localStorage.setItem('ts-name', n); } catch (er) {} look(n); history(n); };
+  look(name); history(name);
 })();
 </script>
 </body>
