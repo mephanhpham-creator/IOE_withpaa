@@ -82,7 +82,7 @@ h2 .sel{font:800 24px var(--font-display)}
   <section class="card" id="fix-sec" hidden>
     <div class="section-label"><h2>Bài cô đã chữa · em làm lại câu sai</h2></div>
     <div id="fix-list" class="fix-list"></div>
-    <form id="fix-who" class="row" hidden><label for="fix-name" class="note">Tên của em:</label><input id="fix-name" class="sel" autocomplete="off"><button class="btn small">Xem bài cần chữa</button></form>
+    <form id="fix-who" class="row"><label for="fix-name" class="note">Tên của em (gõ giống lúc làm bài):</label><input id="fix-name" class="sel" autocomplete="off"><button class="btn small">Cập nhật</button></form>
   </section>
   <section class="card" id="hist-sec" hidden>
     <div class="section-label"><h2>Lịch sử bài làm</h2><span class="note" id="hist-who"></span></div>
@@ -101,11 +101,12 @@ h2 .sel{font:800 24px var(--font-display)}
   const sec = document.getElementById('fix-sec'), list = document.getElementById('fix-list'), who = document.getElementById('fix-who');
   let name = ''; try { name = localStorage.getItem('ts-name') || ''; } catch (e) {}
   async function look(n) {
-    if (!n) { sec.hidden = false; who.hidden = false; list.innerHTML = '<p class="muted">Gõ tên em đã dùng khi làm bài để xem bài cô đã chữa.</p>'; return; }
+    document.getElementById('fix-name').value = n; sec.hidden = false;
+    if (!n) { list.innerHTML = '<p class="muted">Gõ tên em đã dùng khi làm bài, rồi bấm Cập nhật để xem bài cô đã chữa và lịch sử bài làm.</p>'; return; }
+    list.innerHTML = '<p class="muted">Đang tải…</p>';
     let rows = [];
     try { const r = await fetch(SB_URL + '/rest/v1/rpc/list_shared', { method: 'POST', headers: { apikey: SB_KEY, Authorization: 'Bearer ' + SB_KEY, 'Content-Type': 'application/json' }, body: JSON.stringify({ p_student: n }) }); if (r.ok) rows = await r.json(); } catch (e) {}
     rows = rows.filter(x => PAGE_OF[x.set_id]);
-    sec.hidden = !rows.length && who.hidden;
     list.innerHTML = rows.length ? rows.map(x => `<a class="fix-item ${x.corrected ? 'done' : ''}" href="${PAGE_OF[x.set_id]}?chua=${x.id}"><b>${esc(x.set_name || '')}</b><span class="note">nộp ngày ${new Date(x.created_at).toLocaleDateString('vi-VN')} · ${+x.total}/${+x.max_total} điểm</span><span class="spacer"></span><span class="btn small">${x.corrected ? '✓ Đã gửi bài chữa · xem lại' : 'Chữa bài →'}</span></a>`).join('')
       : '<p class="muted">Chưa có bài nào cô chia sẻ để chữa.</p>';
   }
