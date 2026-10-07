@@ -1073,6 +1073,35 @@ if (MODE === 'teacher') {
       </tbody></table></div></section>
       ${skip ? `<section class="card"><h3>Câu chưa làm kịp (${skip})</h3><p class="note">${x.wrong.filter(w => w.student === '(chưa làm kịp)').map(w => w.q).join(', ')}</p></section>` : ''}`;
     $('#p-back').onclick = () => dashView();
+    if (!x.retry) return;
+    const panel = document.createElement('section'); panel.className = 'card grade-panel';
+    const draw = () => {
+      const c = x.corrections, wrongN = x.retry.length;
+      const still = c ? x.retry.filter(it => !c.fixed.includes(it.q)).map(it => it.q) : [];
+      panel.innerHTML = `<h3>Chữa bài cùng học sinh</h3>
+        <p class="note">Bấm "Chia sẻ câu sai cho HS": trang chủ của học sinh hiện ${wrongN} câu sai để em làm lại trên máy (chọn đáp án, điền từ, xếp câu). Câu chưa làm kịp không đưa vào.</p>
+        <div class="field"><label for="pg-note">Nhận xét gửi học sinh</label><textarea id="pg-note" placeholder="Ví dụ: Em chú ý các cụm từ cố định và dùng đủ các mảnh khi sắp xếp câu.">${esc(x.teacher_note || '')}</textarea></div>
+        <div class="row"><button class="btn go" id="pg-save">Lưu nhận xét</button>
+          <button class="btn ${x.shared ? 'on' : ''}" id="pg-share">${x.shared ? '✓ Đang chia sẻ cho HS · bấm để tắt' : 'Chia sẻ câu sai cho HS'}</button><span id="pg-msg" class="note"></span></div>
+        ${c ? `<div class="callout ok"><b>Học sinh đã chữa</b> lúc ${dt(x.corrected_at)}: đúng ${c.fixed.length}/${wrongN} câu.${still.length ? ' Còn sai: câu ' + still.join(', ') + '.' : ' Đã sửa đúng hết.'}</div>` : ''}`;
+      const msg = t => panel.querySelector('#pg-msg').textContent = t;
+      panel.querySelector('#pg-save').onclick = async () => {
+        msg('Đang lưu…'); const note = panel.querySelector('#pg-note').value.trim();
+        const { error } = await sb.from('paper_tests').update({ teacher_note: note || null }).eq('id', x.id);
+        if (error) return msg('Chưa lưu được: ' + error.message);
+        x.teacher_note = note; msg('✓ Đã lưu.');
+      };
+      panel.querySelector('#pg-share').onclick = async () => {
+        msg('Đang cập nhật…');
+        const upd = { shared: !x.shared, teacher_note: panel.querySelector('#pg-note').value.trim() || null };
+        const { error } = await sb.from('paper_tests').update(upd).eq('id', x.id);
+        if (error) return msg('Chưa cập nhật được: ' + error.message);
+        Object.assign(x, upd); draw();
+        msg(x.shared ? '✓ Học sinh mở trang chủ sẽ thấy bài cần chữa.' : 'Đã tắt chia sẻ.');
+      };
+    };
+    draw();
+    $('#app > section').after(panel);
   }
 
   function cell(s, m) { const p = pct(s, m); return `<td class="${p >= 75 ? 'good' : 'bad'}">${+s}/${+m}</td>`; }
@@ -1089,7 +1118,7 @@ if (MODE === 'teacher') {
       </tbody></table></div>` : '<p class="muted">Học sinh chưa làm đề nào trên web.</p>'}</section>
     <section class="card"><h3>Đề làm trên giấy</h3>
       ${pp.length ? `<div class="scroll"><table class="track"><thead><tr><th>Ngày</th><th>Đề</th><th>Câu đúng</th><th>Điểm (thang 2000)</th><th>Làm kịp</th><th></th></tr></thead><tbody>
-      ${pp.map(x => `<tr><td>${d8(x.done_on)}</td><td>${esc(x.title)}</td>${cell(x.correct, x.total_q)}<td><b>${x.score2000}</b></td><td>${x.answered ?? x.total_q}/${x.total_q}</td><td><button class="btn small" data-paper="${x.id}">Xem câu sai</button></td></tr>`).join('')}
+      ${pp.map(x => `<tr><td>${d8(x.done_on)}</td><td>${esc(x.title)}</td>${cell(x.correct, x.total_q)}<td><b>${x.score2000}</b></td><td>${x.answered ?? x.total_q}/${x.total_q}</td><td>${x.corrected_at && x.corrections ? `<span class="chip ok">HS đã chữa ${x.corrections.fixed.length}/${x.retry ? x.retry.length : 0}</span>` : x.shared ? '<span class="chip ok">Đã chia sẻ</span>' : ''} <button class="btn small" data-paper="${x.id}">Xem câu sai</button></td></tr>`).join('')}
       </tbody></table></div>` : '<p class="muted">Chưa có đề giấy nào.</p>'}</section>
     <section class="card"><div class="row"><h3>Vòng tự luyện IOE</h3><span class="spacer"></span><button class="btn small" data-tab2="round">+ Nhập vòng</button></div>
       ${rd.length ? `<div class="scroll"><table class="track"><thead><tr><th>Vòng</th><th>Ngày</th><th>Bài 1</th><th>Bài 2</th><th>Bài 3</th><th>Bài 4</th><th>Tổng</th><th>Kết quả</th><th></th></tr></thead><tbody>

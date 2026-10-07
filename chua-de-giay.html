@@ -4,7 +4,7 @@
 <meta charset="utf-8">
 <meta name="viewport" content="width=device-width, initial-scale=1">
 <meta name="color-scheme" content="light dark">
-<title>Góc học tiếng Anh</title>
+<title>Chữa đề giấy</title>
 <link rel="preconnect" href="https://fonts.googleapis.com">
 <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
 <link rel="stylesheet" href="https://fonts.googleapis.com/css2?family=Baloo+2:wght@600;700;800&family=Nunito:wght@400;600;700;800;900&display=swap">
@@ -57,72 +57,113 @@ h2 .sel{font:800 24px var(--font-display)}
 @media(max-width:850px){.kpi4{grid-template-columns:repeat(2,minmax(0,1fr))}.hbar{grid-template-columns:1fr;gap:4px}}
 @media(max-width:560px){.fgrid{grid-template-columns:1fr}.kpi4{grid-template-columns:1fr}}
 
-.hub{display:grid;grid-template-columns:repeat(3,minmax(0,1fr));gap:16px}
-.hub a{text-decoration:none;color:var(--ink)}
-.hub .rule{height:100%;transition:transform .15s}
-.hub a:hover .rule{transform:translateY(-3px)}
-.hub .go-line{margin-top:6px;font-weight:900;color:var(--sky)}
-.teacher-link{display:flex;align-items:center;gap:14px;padding:16px 20px;border-radius:20px;background:var(--teach-soft);color:var(--ink);text-decoration:none;border:1px solid var(--line)}
-.teacher-link img{width:56px;height:56px;object-fit:contain}
-@media(max-width:850px){.hub{grid-template-columns:1fr}}
+.order-line,.order-pool{display:flex;flex-wrap:wrap;gap:8px;min-height:52px;padding:10px;border-radius:16px}
+.order-line{background:var(--sky-soft);border:2px dashed var(--sky)}.order-pool{background:var(--bg);border:1px solid var(--line)}
+.chip-piece{border:2px solid var(--line);background:var(--surface);color:var(--ink);border-radius:12px;padding:8px 12px;font-weight:800}
+.chip-piece.on{border-color:var(--sky)}.chip-piece:hover{border-color:var(--sky)}
+.chip:not(.ok):not(.bad){background:var(--sky-soft);color:var(--ink)}.btn.go-small{background:var(--go);color:var(--go-ink)}
+.callout{background:var(--bad-soft);border-radius:16px;padding:14px 18px;line-height:1.7}.callout.ok{background:var(--ok-soft)}
+.sel{font:inherit;border:2px solid var(--line);border-radius:14px;background:var(--bg);color:var(--ink);padding:10px 14px;min-width:220px;max-width:100%}
+.retry-feedback{flex-wrap:wrap}.home-btn{text-decoration:none;margin-left:12px}
 </style>
-<style>:root{--banner:url("img/banner.png")}</style>
 </head>
 <body>
-<header class="brandline"><span class="brandmark">✦</span><span class="brandname">Góc học tiếng Anh</span><span class="note">Mỗi ngày một chút, tiến bộ thật nhiều</span></header>
-<main>
-  <div class="welcome"><div class="welcome-copy">
-    <span class="eyebrow">Luyện IOE lớp 6</span>
-    <h1>Hôm nay mình làm bài nào?</h1>
-    <p class="muted">Chọn đúng bài cô giao. Làm xong, kết quả tự gửi cho cô.</p>
-  </div><img class="welcome-mascot" src="img/fox-hello.png" alt=""></div>
-  <div class="hub">
-    <a href="on-tap-buoi-1-2.html"><div class="rule b1"><img class="rule-mascot" src="img/bai2-bunny.png" alt=""><span class="eyebrow">Trên lớp · buổi 3</span><b>Thi thử ôn tập buổi 1–2</b><span class="pts">30 phút · nối cặp, nghe, điền chữ, trắc nghiệm</span><span class="go-line">Bắt đầu →</span></div></a><a href="luyen-tap-buoi-3.html"><div class="rule b0"><img class="rule-mascot" src="img/bai3-bear.png" alt=""><span class="eyebrow">Trên lớp · buổi 3</span><b>Luyện tập: thì hiện tại hoàn thành</b><span class="pts">20 phút · V3, nghe, điền chữ, trắc nghiệm</span><span class="go-line">Bắt đầu →</span></div></a><a href="btvn-buoi-3.html"><div class="rule b2"><img class="rule-mascot" src="img/bai4-owl.png" alt=""><span class="eyebrow">Về nhà · nộp buổi 4</span><b>Bài về nhà buổi 3: cơ thể người</b><span class="pts">30 phút · từ vựng, nghe, điền chữ, trắc nghiệm</span><span class="go-line">Bắt đầu →</span></div></a>
-  </div>
-  <section class="card" id="fix-sec" hidden>
-    <div class="section-label"><h2>Bài cô đã chữa · em làm lại câu sai</h2></div>
-    <div id="fix-list" class="fix-list"></div>
-    <form id="fix-who" class="row" hidden><label for="fix-name" class="note">Tên của em:</label><input id="fix-name" class="sel" autocomplete="off"><button class="btn small">Xem bài cần chữa</button></form>
-  </section>
-  <section class="card" id="hist-sec" hidden>
-    <div class="section-label"><h2>Lịch sử bài làm</h2><span class="note" id="hist-who"></span></div>
-    <div class="scroll"><table class="hist"><thead><tr><th>Ngày</th><th>Bài</th><th>Điểm</th><th>Kết quả</th></tr></thead><tbody id="hist-body"></tbody></table></div>
-  </section>
-  <a class="teacher-link" href="giao-vien.html"><img src="img/owl-teacher.png" alt=""><span><b>Dành cho giáo viên</b><br><span class="note">Theo dõi tiến độ, chữa bài, nhập điểm vòng tự luyện IOE</span></span></a>
-</main>
-<style>.fix-list{display:grid;gap:12px}.fix-item{display:flex;align-items:center;gap:14px;flex-wrap:wrap;padding:16px 18px;border-radius:18px;background:var(--bad-soft);color:var(--ink);text-decoration:none;border:1px solid var(--line)}
-.fix-item.done{background:var(--ok-soft)}.fix-item b{font:800 19px var(--font-display)}.fix-item .spacer{flex:1}.sel{font:inherit;border:2px solid var(--line);border-radius:14px;background:var(--bg);color:var(--ink);padding:8px 12px}
-.hist{width:100%;border-collapse:collapse;font-size:15px}.hist th,.hist td{text-align:left;padding:10px 8px;border-bottom:1px solid var(--line);white-space:nowrap}.hist th{font-size:12px;text-transform:uppercase;letter-spacing:.06em;color:var(--muted)}.hist td.t{white-space:normal}
-</style>
+<header class="brandline"><span class="brandmark">✦</span><span class="brandname">Góc học tiếng Anh</span><span class="note">Chữa bài cùng cô</span><a class="btn small home-btn" href="index.html">⌂ Trang chủ</a></header>
+<main id="app"><section class="card"><p class="muted">Đang mở bài cô đã chữa…</p></section></main>
 <script>
 (function () {
-  const SB_URL = 'https://oywgqkbhhydcdftbgpau.supabase.co', SB_KEY = 'eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJpc3MiOiJzdXBhYmFzZSIsInJlZiI6Im95d2dxa2JoaHlkY2RmdGJncGF1Iiwicm9sZSI6ImFub24iLCJpYXQiOjE3OTEzODExMDQsImV4cCI6MjEwNjk1NzEwNH0.POFHUhiVNlLLZTeow1DxfqeiPJbwne6Nx9cGbob-Qb4', PAGE_OF = {"buoi3-v1": "on-tap-buoi-1-2.html", "b3-luyentap": "luyen-tap-buoi-3.html", "b3-btvn": "btvn-buoi-3.html", "paper": "chua-de-giay.html"};
+  const SB_URL = 'https://oywgqkbhhydcdftbgpau.supabase.co', SB_KEY = 'eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJpc3MiOiJzdXBhYmFzZSIsInJlZiI6Im95d2dxa2JoaHlkY2RmdGJncGF1Iiwicm9sZSI6ImFub24iLCJpYXQiOjE3OTEzODExMDQsImV4cCI6MjEwNjk1NzEwNH0.POFHUhiVNlLLZTeow1DxfqeiPJbwne6Nx9cGbob-Qb4';
+  const $ = s => document.querySelector(s), $$ = s => [...document.querySelectorAll(s)];
   const esc = s => String(s).replace(/[&<>"]/g, c => ({ '&': '&amp;', '<': '&lt;', '>': '&gt;', '"': '&quot;' }[c]));
-  const sec = document.getElementById('fix-sec'), list = document.getElementById('fix-list'), who = document.getElementById('fix-who');
-  let name = ''; try { name = localStorage.getItem('ts-name') || ''; } catch (e) {}
-  async function look(n) {
-    if (!n) { sec.hidden = false; who.hidden = false; list.innerHTML = '<p class="muted">Gõ tên em đã dùng khi làm bài để xem bài cô đã chữa.</p>'; return; }
-    let rows = [];
-    try { const r = await fetch(SB_URL + '/rest/v1/rpc/list_shared', { method: 'POST', headers: { apikey: SB_KEY, Authorization: 'Bearer ' + SB_KEY, 'Content-Type': 'application/json' }, body: JSON.stringify({ p_student: n }) }); if (r.ok) rows = await r.json(); } catch (e) {}
-    rows = rows.filter(x => PAGE_OF[x.set_id]);
-    sec.hidden = !rows.length && who.hidden;
-    list.innerHTML = rows.length ? rows.map(x => `<a class="fix-item ${x.corrected ? 'done' : ''}" href="${PAGE_OF[x.set_id]}?chua=${x.id}"><b>${esc(x.set_name || '')}</b><span class="note">nộp ngày ${new Date(x.created_at).toLocaleDateString('vi-VN')} · ${+x.total}/${+x.max_total} điểm</span><span class="spacer"></span><span class="btn small">${x.corrected ? '✓ Đã gửi bài chữa · xem lại' : 'Chữa bài →'}</span></a>`).join('')
-      : '<p class="muted">Chưa có bài nào cô chia sẻ để chữa.</p>';
+  const norm = s => String(s).toLowerCase().replace(/[’']/g, "'").replace(/[.,?!“”"]/g, ' ').replace(/\s+/g, ' ').trim();
+  const shuffle = a => { a = a.slice(); for (let i = a.length - 1; i > 0; i--) { const j = Math.floor(Math.random() * (i + 1)); [a[i], a[j]] = [a[j], a[i]]; } return a; };
+  const rpc = (fn, body) => fetch(SB_URL + '/rest/v1/rpc/' + fn, { method: 'POST',
+    headers: { apikey: SB_KEY, Authorization: 'Bearer ' + SB_KEY, 'Content-Type': 'application/json' }, body: JSON.stringify(body) });
+  const id = new URLSearchParams(location.search).get('chua');
+  let P = null; const st = {};   // st[q] = { ok, val, order:[], pool:[] }
+  let sendState = '';
+
+  async function load() {
+    let row = null;
+    try { const r = await rpc('get_shared_paper', { p_id: id }); if (r.ok) row = (await r.json())[0]; } catch (e) {}
+    if (!row || !row.retry) {
+      $('#app').innerHTML = '<section class="card"><h2>Chưa mở được bài chữa</h2><p class="muted">Có thể cô chưa chia sẻ bài này, hoặc máy đang mất mạng. Em quay lại trang chủ và thử lại sau nhé.</p><div class="row"><a class="btn go" href="index.html">⌂ Về trang chủ</a></div></section>';
+      return;
+    }
+    P = row;
+    const fixed = (row.corrections && row.corrections.fixed) || [];
+    row.retry.forEach(it => { st[it.q] = { ok: fixed.includes(it.q) ? true : null, val: '', order: [], pool: it.pieces ? shuffle(it.pieces.map((p, i) => i)) : [] }; });
+    if (row.corrections) sendState = 'ok';
+    render();
   }
-  async function history(n) {
-    const hs = document.getElementById('hist-sec'); if (!n) { hs.hidden = true; return; }
-    let rows = [];
-    try { const r = await fetch(SB_URL + '/rest/v1/rpc/student_history', { method: 'POST', headers: { apikey: SB_KEY, Authorization: 'Bearer ' + SB_KEY, 'Content-Type': 'application/json' }, body: JSON.stringify({ p_student: n }) }); if (r.ok) rows = await r.json(); } catch (e) {}
-    hs.hidden = !rows.length; document.getElementById('hist-who').textContent = n;
-    document.getElementById('hist-body').innerHTML = rows.map(x => {
-      const d = new Date(x.done_at).toLocaleDateString('vi-VN');
-      if (x.kind === 'paper') return `<tr><td>${d}</td><td class="t">${esc(x.title)}</td><td><b>${+x.score}</b>/2000</td><td><span class="note">${x.detail.correct}/${x.detail.total} câu đúng</span></td></tr>`;
-      const ok = x.passed; return `<tr><td>${d}</td><td class="t">${esc(x.title || '')}</td><td><b>${+x.score}</b>/${+x.max_score}</td><td><span class="chip ${ok ? 'ok' : 'bad'}">${ok ? 'Đạt' : 'Chưa đạt'}</span></td></tr>`;
-    }).join('');
+
+  function card(it) {
+    const s = st[it.q];
+    const fb = s.ok === true ? `<div class="retry-feedback ok"><img class="feedback-mascot" src="img/fox-correct.png" alt=""><span class="feedback ok">Giỏi lắm!</span>${it.note ? `<span class="note">${esc(it.note)}</span>` : ''}</div>`
+      : s.ok === false ? '<div class="retry-feedback"><img class="feedback-mascot" src="img/fox-wrong.png" alt=""><span class="feedback bad">Chưa đúng, thử lại nhé!</span></div>' : '';
+    let body = '';
+    if (it.kind === 'mcq') {
+      body = `<div class="qtext">${esc(it.text)}</div><div class="opts">${it.options.map((o, n) => `<button class="opt ${s.val === n ? 'sel' : ''}" data-q="${it.q}" data-v="${n}"><span class="k">${'ABCD'[n]}</span><span>${esc(o)}</span></button>`).join('')}</div>`;
+    } else if (it.kind === 'order') {
+      body = `<div class="qtext">Sắp xếp thành câu đúng:</div>
+        <div class="order-line" aria-label="Câu em đang xếp">${s.order.length ? s.order.map(i => `<button class="chip-piece on" data-q="${it.q}" data-out="${i}">${esc(it.pieces[i])}</button>`).join('') : '<span class="note">Bấm vào các mảnh bên dưới theo đúng thứ tự.</span>'}</div>
+        <div class="order-pool">${s.pool.filter(i => !s.order.includes(i)).map(i => `<button class="chip-piece" data-q="${it.q}" data-in="${i}">${esc(it.pieces[i])}</button>`).join('')}</div>
+        <div class="row"><button class="btn small" data-reset="${it.q}">Xếp lại</button><button class="btn small go-small" data-check="${it.q}">Kiểm tra</button></div>`;
+    } else {
+      body = `<div class="qtext">${esc(it.text)}</div>
+        <div class="row"><input class="sel ans" data-q="${it.q}" value="${esc(s.val)}" placeholder="${it.kind === 'letter' ? '1 chữ cái' : 'Gõ từ còn thiếu'}" autocomplete="off" spellcheck="false" ${it.kind === 'letter' ? 'maxlength="1"' : ''}>
+        <button class="btn small go-small" data-check="${it.q}">Kiểm tra</button></div>`;
+    }
+    return `<div class="item ${s.ok ? 'okk' : ''}" id="q-${it.q}"><div class="item-head"><span class="where">Câu ${it.q}</span><span class="chip">${esc(it.type)}</span></div>
+      ${body}<div class="note">Lúc làm bài em đã làm: ${esc(it.student)}</div>${fb}</div>`;
   }
-  who.onsubmit = e => { e.preventDefault(); const n = document.getElementById('fix-name').value.trim(); try { localStorage.setItem('ts-name', n); } catch (er) {} look(n); history(n); };
-  look(name); history(name);
+
+  function render() {
+    const y = window.scrollY;
+    const done = P.retry.filter(it => st[it.q].ok === true).length;
+    $('#app').innerHTML = `<section class="card">
+      <div class="eyebrow">Chữa bài · ${esc(P.student)} · ${P.done_on ? new Date(P.done_on).toLocaleDateString('vi-VN') : ''}</div>
+      <h1>${esc(P.title)}</h1>
+      <p class="muted">Điểm lần làm trên giấy: <b>${P.score2000}/2000</b> (${P.correct}/${P.total_q} câu đúng). Nghe cô giải thích, rồi làm lại từng câu sai bên dưới.</p>
+      ${P.teacher_note ? `<div class="callout ok"><b>Nhận xét của cô:</b> ${esc(P.teacher_note)}</div>` : ''}
+      <div class="row"><span class="chip ${done === P.retry.length ? 'ok' : 'bad'}">Đã sửa đúng ${done}/${P.retry.length}</span><span class="spacer"></span>
+        <button class="btn go" id="send">Gửi bài chữa cho cô</button></div>
+      <p class="note" id="send-msg">${sendState === 'ok' ? '✓ Đã gửi bài chữa cho cô. Em sửa thêm thì bấm gửi lại.' : sendState === 'fail' ? 'Chưa gửi được, em thử lại nhé.' : ''}</p>
+    </section>
+    <section class="card"><div class="items">${P.retry.map(card).join('')}</div></section>`;
+    window.scrollTo(0, y);
+    $$('.opt[data-q]').forEach(b => b.onclick = () => { const it = byQ(b.dataset.q), s = st[it.q]; s.val = +b.dataset.v; s.ok = s.val === it.k; render(); });
+    $$('[data-in]').forEach(b => b.onclick = () => { const s = st[b.dataset.q]; s.order.push(+b.dataset.in); s.ok = null; render(); });
+    $$('[data-out]').forEach(b => b.onclick = () => { const s = st[b.dataset.q]; s.order = s.order.filter(i => i !== +b.dataset.out); s.ok = null; render(); });
+    $$('[data-reset]').forEach(b => b.onclick = () => { const s = st[b.dataset.reset]; s.order = []; s.ok = null; render(); });
+    $$('input.ans').forEach(inp => {
+      inp.oninput = () => { st[inp.dataset.q].val = inp.value; };
+      inp.onkeydown = e => { if (e.key === 'Enter') check(inp.dataset.q); };
+    });
+    $$('[data-check]').forEach(b => b.onclick = () => check(b.dataset.check));
+    $('#send').onclick = send;
+  }
+  const byQ = q => P.retry.find(it => String(it.q) === String(q));
+  function check(q) {
+    const it = byQ(q), s = st[it.q];
+    if (it.kind === 'order') {
+      if (s.order.length < it.pieces.length) { s.ok = false; return render(); }
+      s.ok = norm(s.order.map(i => it.pieces[i]).join(' ')) === norm(it.answer);
+    } else if (it.kind === 'letter') s.ok = norm(s.val) === it.answer;
+    else s.ok = it.alts.some(a => norm(a) === norm(s.val));
+    render();
+  }
+  async function send() {
+    const fixed = P.retry.filter(it => st[it.q].ok === true).map(it => it.q);
+    $('#send-msg').textContent = 'Đang gửi…';
+    try { const r = await rpc('submit_paper_correction', { p_id: P.id, p_data: { fixed, wrong: P.retry.map(it => it.q), at: new Date().toISOString() } }); sendState = r.ok && (await r.json()) === true ? 'ok' : 'fail'; }
+    catch (e) { sendState = 'fail'; }
+    render();
+    $('#send-msg').textContent = sendState === 'ok' ? `✓ Đã gửi bài chữa cho cô (đúng ${fixed.length}/${P.retry.length} câu).` : 'Chưa gửi được, em thử lại nhé.';
+  }
+  load();
 })();
+
 </script>
 </body>
 </html>
