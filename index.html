@@ -52,6 +52,8 @@ h2 .sel{font:800 24px var(--font-display)}
 .callout{background:var(--bad-soft);border-radius:16px;padding:14px 18px;line-height:1.7}.callout.ok{background:var(--ok-soft)}
 .fgrid{display:grid;grid-template-columns:repeat(3,minmax(0,1fr));gap:12px}
 #send-status{justify-content:space-between;flex-wrap:wrap}
+.chip:not(.ok):not(.bad){background:var(--sky-soft);color:var(--ink)}.btn.go-small{background:var(--go);color:var(--go-ink)}
+.grade-panel textarea{font:inherit;font-size:16px;line-height:1.6;min-height:96px;word-break:normal}.home-btn{text-decoration:none;margin-left:12px}.grade-panel>#back{justify-self:start}
 @media(max-width:850px){.kpi4{grid-template-columns:repeat(2,minmax(0,1fr))}.hbar{grid-template-columns:1fr;gap:4px}}
 @media(max-width:560px){.fgrid{grid-template-columns:1fr}.kpi4{grid-template-columns:1fr}}
 
@@ -77,7 +79,33 @@ h2 .sel{font:800 24px var(--font-display)}
   <div class="hub">
     <a href="on-tap-buoi-1-2.html"><div class="rule b1"><img class="rule-mascot" src="img/bai2-bunny.png" alt=""><span class="eyebrow">Trên lớp · buổi 3</span><b>Thi thử ôn tập buổi 1–2</b><span class="pts">30 phút · nối cặp, nghe, điền chữ, trắc nghiệm</span><span class="go-line">Bắt đầu →</span></div></a><a href="luyen-tap-buoi-3.html"><div class="rule b0"><img class="rule-mascot" src="img/bai3-bear.png" alt=""><span class="eyebrow">Trên lớp · buổi 3</span><b>Luyện tập: thì hiện tại hoàn thành</b><span class="pts">20 phút · V3, nghe, điền chữ, trắc nghiệm</span><span class="go-line">Bắt đầu →</span></div></a><a href="btvn-buoi-3.html"><div class="rule b2"><img class="rule-mascot" src="img/bai4-owl.png" alt=""><span class="eyebrow">Về nhà · nộp buổi 4</span><b>Bài về nhà buổi 3: cơ thể người</b><span class="pts">30 phút · từ vựng, nghe, điền chữ, trắc nghiệm</span><span class="go-line">Bắt đầu →</span></div></a>
   </div>
+  <section class="card" id="fix-sec" hidden>
+    <div class="section-label"><h2>Bài cô đã chữa · em làm lại câu sai</h2></div>
+    <div id="fix-list" class="fix-list"></div>
+    <form id="fix-who" class="row" hidden><label for="fix-name" class="note">Tên của em:</label><input id="fix-name" class="sel" autocomplete="off"><button class="btn small">Xem bài cần chữa</button></form>
+  </section>
   <a class="teacher-link" href="giao-vien.html"><img src="img/owl-teacher.png" alt=""><span><b>Dành cho giáo viên</b><br><span class="note">Theo dõi tiến độ, chữa bài, nhập điểm vòng tự luyện IOE</span></span></a>
 </main>
+<style>.fix-list{display:grid;gap:12px}.fix-item{display:flex;align-items:center;gap:14px;flex-wrap:wrap;padding:16px 18px;border-radius:18px;background:var(--bad-soft);color:var(--ink);text-decoration:none;border:1px solid var(--line)}
+.fix-item.done{background:var(--ok-soft)}.fix-item b{font:800 19px var(--font-display)}.fix-item .spacer{flex:1}.sel{font:inherit;border:2px solid var(--line);border-radius:14px;background:var(--bg);color:var(--ink);padding:8px 12px}</style>
+<script>
+(function () {
+  const SB_URL = 'https://oywgqkbhhydcdftbgpau.supabase.co', SB_KEY = 'eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJpc3MiOiJzdXBhYmFzZSIsInJlZiI6Im95d2dxa2JoaHlkY2RmdGJncGF1Iiwicm9sZSI6ImFub24iLCJpYXQiOjE3OTEzODExMDQsImV4cCI6MjEwNjk1NzEwNH0.POFHUhiVNlLLZTeow1DxfqeiPJbwne6Nx9cGbob-Qb4', PAGE_OF = {"buoi3-v1": "on-tap-buoi-1-2.html", "b3-luyentap": "luyen-tap-buoi-3.html", "b3-btvn": "btvn-buoi-3.html"};
+  const esc = s => String(s).replace(/[&<>"]/g, c => ({ '&': '&amp;', '<': '&lt;', '>': '&gt;', '"': '&quot;' }[c]));
+  const sec = document.getElementById('fix-sec'), list = document.getElementById('fix-list'), who = document.getElementById('fix-who');
+  let name = ''; try { name = localStorage.getItem('ts-name') || ''; } catch (e) {}
+  async function look(n) {
+    if (!n) { sec.hidden = false; who.hidden = false; list.innerHTML = '<p class="muted">Gõ tên em đã dùng khi làm bài để xem bài cô đã chữa.</p>'; return; }
+    let rows = [];
+    try { const r = await fetch(SB_URL + '/rest/v1/rpc/list_shared', { method: 'POST', headers: { apikey: SB_KEY, Authorization: 'Bearer ' + SB_KEY, 'Content-Type': 'application/json' }, body: JSON.stringify({ p_student: n }) }); if (r.ok) rows = await r.json(); } catch (e) {}
+    rows = rows.filter(x => PAGE_OF[x.set_id]);
+    sec.hidden = !rows.length && who.hidden;
+    list.innerHTML = rows.length ? rows.map(x => `<a class="fix-item ${x.corrected ? 'done' : ''}" href="${PAGE_OF[x.set_id]}?chua=${x.id}"><b>${esc(x.set_name || '')}</b><span class="note">nộp ngày ${new Date(x.created_at).toLocaleDateString('vi-VN')} · ${+x.total}/${+x.max_total} điểm</span><span class="spacer"></span><span class="btn small">${x.corrected ? '✓ Đã gửi bài chữa · xem lại' : 'Chữa bài →'}</span></a>`).join('')
+      : '<p class="muted">Chưa có bài nào cô chia sẻ để chữa.</p>';
+  }
+  who.onsubmit = e => { e.preventDefault(); const n = document.getElementById('fix-name').value.trim(); try { localStorage.setItem('ts-name', n); } catch (er) {} look(n); };
+  look(name);
+})();
+</script>
 </body>
 </html>
