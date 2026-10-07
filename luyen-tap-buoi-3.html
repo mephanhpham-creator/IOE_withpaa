@@ -4,7 +4,7 @@
 <meta charset="utf-8">
 <meta name="viewport" content="width=device-width, initial-scale=1">
 <meta name="color-scheme" content="light dark">
-<title>Chữa bài – giáo viên</title>
+<title>Luyện tập buổi 3</title>
 <link rel="preconnect" href="https://fonts.googleapis.com">
 <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
 <link rel="stylesheet" href="https://fonts.googleapis.com/css2?family=Baloo+2:wght@600;700;800&family=Nunito:wght@400;600;700;800;900&display=swap">
@@ -122,8 +122,8 @@ const SETS = {
 };
 function useSet(id) { EXAM_ID = id; BAI = SETS[id].bai; PASSAGE = SETS[id].passage; TOTAL_SEC = SETS[id].min * 60; }
 
-const MODE = 'teacher';            // 'student' | 'teacher'
-let EXAM_ID = 'buoi3-v1';
+const MODE = 'student';            // 'student' | 'teacher'
+let EXAM_ID = 'b3-luyentap';
 
 let TOTAL_SEC = SETS[EXAM_ID].min * 60;
 const MAX_PLAYS = 3;
