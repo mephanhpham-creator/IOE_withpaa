@@ -853,7 +853,7 @@ if (MODE === 'student') {
     if (sec[2]) sec[2].remove();
     const card = sec[1]; if (!card) return;
     const eb = sec[0].querySelector('.eyebrow'); if (eb) eb.textContent = `Bài làm ngày ${new Date(CORR.at).toLocaleDateString('vi-VN')} · ${S.name}`;
-    card.querySelector('h2').textContent = 'Chữa bài về nhà';
+    card.querySelector('h2').textContent = SETS[EXAM_ID].hw ? 'Chữa bài về nhà' : 'Chữa bài';
     const p = card.querySelector('p.muted');
     if (p) p.textContent = 'Cô đã chấm bài. Em làm lại từng câu sai bên dưới, xong bấm "Gửi bài chữa cho cô".';
     if (CORR.note) { const c = document.createElement('div'); c.className = 'callout ok'; c.innerHTML = '<b>Nhận xét của cô:</b> ' + esc(CORR.note); p.after(c); }
