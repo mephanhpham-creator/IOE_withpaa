@@ -990,7 +990,7 @@ if (MODE === 'teacher') {
         <div class="summary-stat"><span>Điểm trung bình (web)</span><b>${at.length ? avg + '%' : '–'}</b></div>
         <div class="summary-stat"><span>Tỉ lệ đề đạt ≥ 75%</span><b>${at.length ? passRate + '%' : '–'}</b></div>
         <div class="summary-stat"><span>Vòng IOE cao nhất đã đạt</span><b>${best || '–'}</b></div></div>
-      <div class="tabs">${[['track', 'Bảng theo dõi'], ['hw', `Chấm chữa BTVN${ungraded(at) ? ' · ' + ungraded(at) + ' bài mới' : ''}`], ['analysis', 'Phân tích điểm yếu'], ['round', D.edit ? 'Sửa vòng IOE' : 'Nhập vòng IOE']].map(([k, l]) => `<button class="btn small ${D.tab === k ? 'on' : ''}" data-tab="${k}">${l}</button>`).join('')}</div>
+      <div class="tabs">${[['track', 'Bảng theo dõi'], ['hw', `Chấm chữa bài${ungraded(at) ? ' · ' + ungraded(at) + ' bài mới' : ''}`], ['analysis', 'Phân tích điểm yếu'], ['round', D.edit ? 'Sửa vòng IOE' : 'Nhập vòng IOE']].map(([k, l]) => `<button class="btn small ${D.tab === k ? 'on' : ''}" data-tab="${k}">${l}</button>`).join('')}</div>
       </section>`;
     if (!names.length && D.tab !== 'round') body += `<section class="card"><h3>Chưa có kết quả nào</h3><p class="muted">Khi học sinh làm xong một đề trên web, kết quả tự hiện ở đây. Bạn cũng có thể nhập điểm vòng tự luyện IOE ở thẻ "Nhập vòng IOE".</p></section>`;
     else body += D.tab === 'track' ? trackView(at, rd, pp) : D.tab === 'hw' ? hwList(at) : D.tab === 'analysis' ? analysisView(at, rd, pp) : roundForm();
@@ -1016,9 +1016,9 @@ if (MODE === 'teacher') {
     return '<span class="chip bad">Chưa chấm</span>';
   }
   function hwList(at) {
-    const hw = at.filter(isHWrow);
-    return `<section class="card"><h3>Chấm chữa bài về nhà</h3>
-      <p class="note">Học sinh chỉ thấy điểm bài về nhà. Bấm "Chấm chữa" để xem từng câu sai, ghi nhận xét. Khi đến lớp, bấm "Chia sẻ câu sai cho HS": trang chủ của học sinh sẽ hiện bài để em làm lại các câu sai, kết quả chữa tự gửi về đây.</p>
+    const hw = at;
+    return `<section class="card"><h3>Chấm chữa bài làm trên web</h3>
+      <p class="note">Mọi bài đều chia sẻ được (bài về nhà: học sinh chỉ thấy điểm cho đến khi cô chia sẻ). Bấm "Chấm chữa" để xem từng câu sai, ghi nhận xét. Khi đến lớp, bấm "Chia sẻ câu sai cho HS": trang chủ của học sinh sẽ hiện bài để em làm lại các câu sai, kết quả chữa tự gửi về đây.</p>
       ${hw.length ? `<div class="scroll"><table class="track"><thead><tr><th>Ngày nộp</th><th>Đề</th><th>Điểm</th><th>Câu sai</th><th>Trạng thái</th><th></th></tr></thead><tbody>
       ${hw.map(x => `<tr><td>${dt(x.created_at)}</td><td>${esc((SETS[x.set_id] && SETS[x.set_id].short) || x.set_name)}</td>${cell(x.total, x.max_total)}<td>${wrongCount(x)}</td><td>${hwStatus(x)}</td>
         <td><button class="btn small ${x.graded_at ? '' : 'go-small'}" data-grade="${x.id}">Chấm chữa</button></td></tr>`).join('')}</tbody></table></div>`
@@ -1028,12 +1028,13 @@ if (MODE === 'teacher') {
     useSet(x.set_id);
     T.r = { id: x.set_id, n: x.student, at: x.created_at, s: x.seconds || 0, u: x.per_bai_seconds || [0, 0, 0, 0], a: x.answers };
     T.all = false; tReview(); window.scrollTo(0, 0);
-    const back = $('#back'); if (back) back.textContent = '← Về danh sách bài về nhà';
+    const back = $('#back'); if (back) back.textContent = '← Quay lại';
     const panel = document.createElement('section'); panel.className = 'card grade-panel';
     const draw = () => {
       const c = x.corrections;
       const still = c ? c.wrong.filter(k => !c.fixed.includes(k)).map(k => { const [i, j] = k.split('-').map(Number); return `Bài ${i + 1} ${SETS[x.set_id].bai[i].type === "match" ? "cặp" : "câu"} ${j + 1}`; }) : [];
-      panel.innerHTML = `<h3>Chấm chữa bài về nhà</h3>
+      panel.innerHTML = `<h3>Chấm chữa bài</h3>
+        <p class="note">Bấm "Chia sẻ câu sai cho HS": trang chủ của học sinh hiện mục "Bài cô đã chữa" để em làm lại các câu sai.</p>
         <div class="field"><label for="g-note">Nhận xét gửi học sinh (hiện khi em mở bài chữa)</label><textarea id="g-note" placeholder="Ví dụ: Em nghe tốt câu ngắn, cần nghe kỹ số trong đoạn văn.">${esc(x.teacher_note || '')}</textarea></div>
         <div class="row"><button class="btn go" id="g-save">Lưu nhận xét</button>
           <button class="btn ${x.shared ? 'on' : ''}" id="g-share">${x.shared ? '✓ Đang chia sẻ cho HS · bấm để tắt' : 'Chia sẻ câu sai cho HS'}</button><span id="g-msg" class="note"></span></div>
@@ -1192,7 +1193,7 @@ if (MODE === 'teacher') {
     $$('[data-detail]').forEach(b => b.onclick = () => {
       const x = mine(D.attempts)[+b.dataset.detail];
       if (!SETS[x.set_id]) return;
-      if (isHWrow(x)) { D.tab = 'hw'; return openGrade(x); }
+      return openGrade(x);
       useSet(x.set_id);
       T.r = { id: x.set_id, n: x.student, at: x.created_at, s: x.seconds || 0, u: x.per_bai_seconds || [0, 0, 0, 0], a: x.answers };
       T.all = false; tReview(); window.scrollTo(0, 0);
