@@ -463,7 +463,7 @@ function tReview() {
       ${b.type === 'listen' && PASSAGE ? `<div class="explain"><b>Toàn bộ đoạn văn (câu ${SETS[EXAM_ID].pRange})</b><span class="transcript">${esc(PASSAGE)}</span></div>` : ''}</section>`;
   });
   $('#app').innerHTML = html;
-  $('#back').onclick = () => { stopAudio(); tStart(); };
+  $('#back').onclick = () => { stopAudio(); (window.__goBack || tStart)(); };
   if ($('#fWrong')) { $('#fWrong').onclick = () => { T.all = false; keepScroll(tReview); }; $('#fAll').onclick = () => { T.all = true; keepScroll(tReview); }; }
   $$('[data-clip]').forEach(btn => btn.onclick = () => playClip(btn.dataset.clip, btn));
 }
@@ -916,12 +916,29 @@ if (MODE === 'teacher') {
   const d8 = s => s ? new Date(s).toLocaleDateString('vi-VN', { day: '2-digit', month: '2-digit' }) : '';
 
   async function dashStart() {
-    stopAudio(); uiBrand(); document.body.classList.add('teacher-mode'); $('#bar').hidden = true; window.scrollTo(0, 0);
+    stopAudio(); uiBrand(); addHome(); document.body.classList.add('teacher-mode'); $('#bar').hidden = true; window.scrollTo(0, 0);
     const { data } = await sb.auth.getSession();
     if (!data.session) return loginView();
     await load();
   }
   tStart = dashStart;
+
+  // Điều hướng: nút "Quay lại" và nút Back của trình duyệt đưa về màn trước
+  let navLock = false;
+  const navPush = st => { if (!navLock) history.pushState(st, ''); };
+  window.addEventListener('popstate', e => {
+    const st = e.state || { v: 'dash', tab: 'track' };
+    navLock = true; stopAudio();
+    if (st.v === 'dash') { D.tab = st.tab || 'track'; D.edit = null; if (D.loaded) { dashView(); window.scrollTo(0, 0); } else dashStart(); }
+    navLock = false;
+  });
+  const goBack = () => { if (history.state && history.state.v === 'sub') history.back(); else { D.loaded ? dashView() : dashStart(); } };
+  window.__goBack = goBack;
+  function addHome() {
+    const bl = document.querySelector('.brandline'); if (!bl || bl.querySelector('.home-btn')) return;
+    const a = document.createElement('a'); a.className = 'btn small home-btn'; a.href = 'index.html'; a.textContent = '⌂ Trang chủ';
+    a.style.textDecoration = 'none'; a.style.marginLeft = '12px'; bl.append(a);
+  }
 
   function loginView() {
     $('#app').innerHTML = `<section class="card">
@@ -951,8 +968,8 @@ if (MODE === 'teacher') {
     $('#paste').onclick = openPaste;
   }
   function openPaste() {
-    pasteStart();
-    const back = document.createElement('button'); back.className = 'btn small'; back.textContent = '← Về bảng theo dõi'; back.onclick = dashStart;
+    navPush({ v: 'sub' }); pasteStart();
+    const back = document.createElement('button'); back.className = 'btn small'; back.textContent = '← Quay lại'; back.onclick = goBack;
     $('#app > .card').prepend(back);
   }
 
@@ -963,7 +980,8 @@ if (MODE === 'teacher') {
     const pp = await sb.from('paper_tests').select('*').order('done_on', { ascending: false });
     if (t.error || a.error || r.error) { D.msg = 'Không tải được dữ liệu: ' + (t.error || a.error || r.error).message; await sb.auth.signOut(); return loginView(); }
     if (!t.data.length) { D.msg = 'Tài khoản này chưa được cấp quyền giáo viên.'; await sb.auth.signOut(); return loginView(); }
-    D.attempts = a.data; D.rounds = r.data; D.papers = pp.error ? [] : pp.data;
+    D.attempts = a.data; D.rounds = r.data; D.papers = pp.error ? [] : pp.data; D.loaded = true;
+    history.replaceState({ v: 'dash', tab: D.tab }, '');
     const names = students();
     if (!D.student || !names.some(n => nameKey(n) === nameKey(D.student))) D.student = names[0] || null;
     dashView();
@@ -996,7 +1014,7 @@ if (MODE === 'teacher') {
     else body += D.tab === 'track' ? trackView(at, rd, pp) : D.tab === 'hw' ? hwList(at) : D.tab === 'analysis' ? analysisView(at, rd, pp) : roundForm();
     $('#app').innerHTML = body;
     const s = $('#stu'); if (s) s.onchange = () => { D.student = s.value; D.edit = null; dashView(); };
-    $$('[data-tab]').forEach(b => b.onclick = () => { D.tab = b.dataset.tab; if (D.tab !== 'round') D.edit = null; dashView(); });
+    $$('[data-tab]').forEach(b => b.onclick = () => { if (b.dataset.tab !== D.tab) navPush({ v: 'dash', tab: b.dataset.tab }); D.tab = b.dataset.tab; if (D.tab !== 'round') D.edit = null; dashView(); });
     $('#refresh').onclick = load; $('#paste').onclick = openPaste;
     $('#logout').onclick = async () => { await sb.auth.signOut(); D.attempts = []; D.rounds = []; loginView(); };
     wireTab();
@@ -1025,6 +1043,7 @@ if (MODE === 'teacher') {
       : '<p class="muted">Học sinh chưa nộp bài về nhà nào trên web.</p>'}</section>`;
   }
   function openGrade(x) {
+    navPush({ v: 'sub' });
     useSet(x.set_id);
     T.r = { id: x.set_id, n: x.student, at: x.created_at, s: x.seconds || 0, u: x.per_bai_seconds || [0, 0, 0, 0], a: x.answers };
     T.all = false; tReview(); window.scrollTo(0, 0);
@@ -1060,6 +1079,7 @@ if (MODE === 'teacher') {
   }
 
   function paperView(x) {
+    navPush({ v: 'sub' });
     window.scrollTo(0, 0);
     const types = Object.entries(x.by_type).map(([l, v]) => ({ l, p: pct(v[0], v[1]), n: `${v[0]}/${v[1]} câu` })).sort((a, b) => a.p - b.p);
     const wr = x.wrong.filter(w => w.student !== '(chưa làm kịp)'), skip = x.wrong.length - wr.length;
@@ -1074,7 +1094,7 @@ if (MODE === 'teacher') {
       ${wr.map(w => `<tr><td><b>${w.q}</b></td><td>${esc(w.type)}</td><td>${esc(w.question)}</td><td class="bad">${esc(w.student)}</td><td class="good">${esc(w.key)}</td><td class="note">${esc(w.note)}</td></tr>`).join('')}
       </tbody></table></div></section>
       ${skip ? `<section class="card"><h3>Câu chưa làm kịp (${skip})</h3><p class="note">${x.wrong.filter(w => w.student === '(chưa làm kịp)').map(w => w.q).join(', ')}</p></section>` : ''}`;
-    $('#p-back').onclick = () => dashView();
+    $('#p-back').onclick = goBack;
     if (!x.retry) return;
     const panel = document.createElement('section'); panel.className = 'card grade-panel';
     const draw = () => {
