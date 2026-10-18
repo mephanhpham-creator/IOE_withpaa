@@ -574,7 +574,7 @@ function uiStart() {
   const heading = uiWelcome(card);
   const rules = card.querySelector('.rules');
   const label = uiNode('div', 'section-label');
-  label.append(uiNode('h2', '', 'Hành trình hôm nay'), uiNode('span', 'note', '4 bài · 40 câu / cặp'));
+  label.append(uiNode('h2', '', 'Hành trình hôm nay'), uiNode('span', 'note', '4 bài · ' + BAI.reduce((s, b) => s + (b.pairs ? b.pairs.length : b.items.length), 0) + ' câu / cặp'));
   card.insertBefore(label, rules);
   [...rules.children].forEach((rule, i) => {
     rule.classList.add('b' + i);
