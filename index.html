@@ -122,7 +122,7 @@ h2 .sel{font:800 24px var(--font-display)}
     document.getElementById('hist-body').innerHTML = rows.map(x => {
       const d = new Date(x.done_at).toLocaleDateString('vi-VN');
       if (x.kind === 'paper') return `<tr><td>${d}</td><td class="t">${esc(x.title)}</td><td><b>${+x.score}</b>/2000</td><td><span class="note">${x.detail.correct}/${x.detail.total} câu đúng</span></td></tr>`;
-      const ok = x.passed; return `<tr><td>${d}</td><td class="t">${esc(x.title || '')}</td><td><b>${+x.score}</b>/${+x.max_score}</td><td><span class="chip ${ok ? 'ok' : 'bad'}">${ok ? 'Đạt' : 'Chưa đạt'}</span></td></tr>`;
+      const ok = x.passed; return `<tr><td>${d}</td><td class="t">${esc(x.title || '')}</td><td><b>${Math.round(+x.score)}</b>/${+x.max_score}</td><td><span class="chip ${ok ? 'ok' : 'bad'}">${ok ? 'Đạt' : 'Chưa đạt'}</span></td></tr>`;
     }).join('');
   }
   who.onsubmit = e => { e.preventDefault(); const n = document.getElementById('fix-name').value.trim(); try { localStorage.setItem('ts-name', n); } catch (er) {} look(n); history(n); };

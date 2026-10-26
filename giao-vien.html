@@ -172,7 +172,7 @@ function isRight(i, j, ans) {
   return b.type === 'fill' ? (a[j] || '').toLowerCase() === b.items[j].w : a[j] === b.items[j].k;
 }
 function count(i) { return BAI[i].type === 'match' ? BAI[i].pairs.length : BAI[i].items.length; }
-function score(i, ans) { const b = BAI[i]; let c = 0; for (let j = 0; j < count(i); j++) if (isRight(i, j, ans)) c++; return c * b.pts / count(i); }
+function score(i, ans) { const b = BAI[i]; let c = 0; for (let j = 0; j < count(i); j++) if (isRight(i, j, ans)) c++; return Math.round(c * b.pts / count(i)); }
 
 // ---------- audio (shared) ----------
 let player = null, playingId = null;
@@ -1134,7 +1134,7 @@ if (MODE === 'teacher') {
     $('#app > section').after(panel);
   }
 
-  function cell(s, m) { const p = pct(s, m); return `<td class="${p >= 75 ? 'good' : 'bad'}">${+s}/${+m}</td>`; }
+  function cell(s, m) { const p = pct(s, m); return `<td class="${p >= 75 ? 'good' : 'bad'}">${Math.round(+s)}/${+m}</td>`; }
   function trackView(at, rd, pp) {
     const timeline = [...at.map(x => ({ d: x.created_at, p: pct(+x.total, +x.max_total), l: (SETS[x.set_id] && SETS[x.set_id].short) || x.set_name, web: true })),
                       ...rd.map(r => { const q = roundPass(r); return { d: r.done_on || r.created_at, p: pct(q.s, q.m), l: 'Vòng ' + r.round_no, web: false }; }),
