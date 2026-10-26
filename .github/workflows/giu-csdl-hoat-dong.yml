@@ -1,0 +1,21 @@
+# Gửi 1 yêu cầu nhỏ tới Supabase mỗi 3 ngày để cơ sở dữ liệu (gói miễn phí) không tự tạm dừng.
+name: Giữ cơ sở dữ liệu hoạt động
+on:
+  schedule:
+    - cron: '0 1 */3 * *'   # 8 giờ sáng (giờ Việt Nam) mỗi 3 ngày
+  workflow_dispatch:         # cho phép bấm chạy tay trên GitHub
+jobs:
+  ping:
+    runs-on: ubuntu-latest
+    steps:
+      - name: Gọi cơ sở dữ liệu
+        env:
+          SB_URL: https://oywgqkbhhydcdftbgpau.supabase.co
+          # khoá công khai (anon) – đã có sẵn trong trang web, chỉ đọc được dữ liệu được phép
+          SB_KEY: eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJpc3MiOiJzdXBhYmFzZSIsInJlZiI6Im95d2dxa2JoaHlkY2RmdGJncGF1Iiwicm9sZSI6ImFub24iLCJpYXQiOjE3OTEzODExMDQsImV4cCI6MjEwNjk1NzEwNH0.POFHUhiVNlLLZTeow1DxfqeiPJbwne6Nx9cGbob-Qb4
+        run: |
+          code=$(curl -s -o /dev/null -w "%{http_code}" -X POST "$SB_URL/rest/v1/rpc/list_shared" \
+            -H "apikey: $SB_KEY" -H "Authorization: Bearer $SB_KEY" -H "Content-Type: application/json" \
+            -d '{"p_student":"keepalive"}')
+          echo "Supabase trả lời: $code"
+          test "$code" = "200"
